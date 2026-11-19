@@ -1,0 +1,9 @@
+{
+  "appId": "com.cptpureblood.argosy",
+  "appName": "Argosy",
+  "webDir": "www",
+  "backgroundColor": "#ecdcb6",
+  "server": {
+    "androidScheme": "https"
+  }
+}
