@@ -1,7 +1,7 @@
 /* Argosy – animated Mediterranean map (canvas): coast, waves, wind, skull zones, routes, ship. */
 (function (G) {
   const A = G.A, W = A.world, R = A.game, C = A.C;
-  const RAD = Math.PI / 180, YS = 1.27, PAD = 1.6;
+  const RAD = Math.PI / 180, YS = 1.27, PAD = 1.6, PADY = 8, MINK = 3.4;
   const M = (A.map = { active: false, sel: null, onSelect: null, preview: null, ship: null, vAnim: null, follow: false, trail: [] });
   let cv, ctx, w = 0, h = 0, dpr = 1, time = 0, last = 0;
   const pts = new Map(); let moved = false, pinch = null;
@@ -13,11 +13,11 @@
   function buildDecor() {
     W.build();
     let guard = 0;
-    while ((waves.length < 260 || peaks.length < 120) && guard++ < 20000) {
+    while ((waves.length < 900 || peaks.length < 320) && guard++ < 90000) {
       const lon = C.LON_MIN + srnd() * (C.LON_MAX - C.LON_MIN), lat = C.LAT_MIN + srnd() * (C.LAT_MAX - C.LAT_MIN);
       const c = W.toCell(lon, lat);
-      if (W.isLandCell(c[0], c[1])) { if (peaks.length < 120 && lat > 29.5) peaks.push([lon, lat, 0.6 + srnd() * 0.8]); }
-      else if (!W.nearCoast[c[1] * W.cols + c[0]] && waves.length < 260) waves.push([lon, lat, srnd() * 6.28]);
+      if (W.isLandCell(c[0], c[1])) { if (peaks.length < 320) peaks.push([lon, lat, 0.6 + srnd() * 0.8]); }
+      else if (!W.nearCoast[c[1] * W.cols + c[0]] && waves.length < 900) waves.push([lon, lat, srnd() * 6.28]);
     }
     for (let i = 0; i < 90; i++) parts.push({ x: srnd(), y: srnd(), s: 0.5 + srnd() });
   }
@@ -25,10 +25,10 @@
   const proj = (lon, lat) => [w / 2 + (lon - M.cx) * M.k, h / 2 - (lat - M.cy) * M.k * YS];
   M.proj = proj;
   function clampCam() {
-    M.tk = Math.max(Math.max(7, w / (C.LON_MAX - C.LON_MIN + 2 * PAD)), Math.min(46, M.tk)); M.k = Math.max(7, Math.min(46, M.k));
+    M.tk = Math.max(Math.max(MINK, w / (C.LON_MAX - C.LON_MIN + 2 * PAD)), Math.min(46, M.tk)); M.k = Math.max(MINK, Math.min(46, M.k));
     [['cx', 'tcx'], ['cy', 'tcy']].forEach(() => {});
     const vw = w / M.k, vh = h / (M.k * YS);
-    const minX = C.LON_MIN - PAD + vw / 2, maxX = C.LON_MAX + PAD - vw / 2, minY = C.LAT_MIN - PAD * 0.6 + vh / 2, maxY = C.LAT_MAX + PAD * 0.6 - vh / 2;
+    const minX = C.LON_MIN - PAD + vw / 2, maxX = C.LON_MAX + PAD - vw / 2, minY = C.LAT_MIN - PADY + vh / 2, maxY = C.LAT_MAX + PADY - vh / 2;
     M.cx = minX > maxX ? (C.LON_MIN + C.LON_MAX) / 2 : Math.max(minX, Math.min(maxX, M.cx));
     M.cy = minY > maxY ? (C.LAT_MIN + C.LAT_MAX) / 2 : Math.max(minY, Math.min(maxY, M.cy));
   }
@@ -93,8 +93,8 @@
       const nx = [];
       for (let i = 0; i < pts.length; i++) {
         const a = pts[i], b = pts[(i + 1) % pts.length]; nx.push(a);
-        const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy); if (len < 0.18) continue;
-        const r = (hash2(a[0] + lv * 7.3, a[1] + b[0] * 1.7 + b[1]) - 0.5) * len * 0.34;
+        const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy); if (len < 0.18 || len > 3) continue;
+        const r = Math.max(-0.1, Math.min(0.1, (hash2(a[0] + lv * 7.3, a[1] + b[0] * 1.7 + b[1]) - 0.5) * len * 0.34));
         nx.push([(a[0] + b[0]) / 2 - (dy / len) * r, (a[1] + b[1]) / 2 + (dx / len) * r]);
       }
       pts = nx;
@@ -126,23 +126,34 @@
       const ws = (R.S() ? R.S().wind.str : 1); const b = Math.sin(time * (1.2 + 0.4 * ws) + v[2]) * (1.5 + ws);
       ctx.beginPath(); ctx.moveTo(q[0] - 6, q[1]); ctx.quadraticCurveTo(q[0] - 3, q[1] - 3 + b, q[0], q[1]); ctx.quadraticCurveTo(q[0] + 3, q[1] + 3 - b, q[0] + 6, q[1]); ctx.stroke();
     });
-    // land: shoreline glow, fill, outline
-    const lands = [A.EURASIA, A.AFRICA].concat(A.ISLANDS);
+    // land: shoreline glow, outline, fill, inland waters
+    const lands = [A.OLDWORLD].concat(A.ISLANDS);
     ctx.lineJoin = 'round';
     lands.forEach((p) => { polyPath(p); ctx.strokeStyle = 'rgba(120,90,50,0.13)'; ctx.lineWidth = 11; ctx.stroke(); ctx.lineWidth = 6; ctx.stroke(); });
+    lands.forEach((p) => { polyPath(p); ctx.strokeStyle = '#5b4326'; ctx.lineWidth = 3; ctx.stroke(); });
     lands.forEach((p) => { polyPath(p); ctx.fillStyle = '#d6bd84'; ctx.fill(); });
-    // inland water over land
-    polyPath(A.BLACK_SEA); ctx.fillStyle = '#e4d6ad'; ctx.fill();
+    A.WATERS.forEach((p) => { polyPath(p); ctx.fillStyle = '#e4d6ad'; ctx.fill(); });
     ctx.strokeStyle = '#e4d6ad'; ctx.lineCap = 'round';
-    A.CHANNELS.forEach((ch) => { ctx.beginPath(); ch.pts.forEach((p, i) => { const q = proj(p[0], p[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.lineWidth = Math.max(3, ch.w * M.k * 0.7); ctx.stroke(); });
+    A.CHANNELS.forEach((ch) => { ctx.beginPath(); ch.pts.forEach((p, i) => { const q = proj(p[0], p[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.lineWidth = Math.max(2, ch.w * M.k * 0.55); ctx.stroke(); });
     ctx.strokeStyle = '#5b4326'; ctx.lineWidth = 1.5;
-    lands.forEach((p) => { polyPath(p); ctx.stroke(); });
-    polyPath(A.BLACK_SEA); ctx.stroke();
+    ctx.save(); ctx.beginPath(); lands.forEach((p) => { detail(p).forEach((pt, i) => { const q = proj(pt[0], pt[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); }); ctx.clip();
+    A.WATERS.forEach((p) => { polyPath(p); ctx.stroke(); }); ctx.restore();
     // mountains
     if (M.k > 10) { ctx.strokeStyle = 'rgba(91,67,38,0.55)'; ctx.lineWidth = 1.1; peaks.forEach((v) => { const q = proj(v[0], v[1]); if (q[0] < 0 || q[0] > w || q[1] < 0 || q[1] > h) return; const s = 4 * v[2] * Math.min(1.6, M.k / 14); ctx.beginPath(); ctx.moveTo(q[0] - s, q[1] + s * 0.6); ctx.lineTo(q[0], q[1] - s * 0.6); ctx.lineTo(q[0] + s, q[1] + s * 0.6); ctx.stroke(); }); }
+    // political map (close zoom only)
+    const pol = Math.max(0, Math.min(1, (M.k - 15) / 7));
+    if (pol > 0) {
+      ctx.save(); ctx.globalAlpha = pol * 0.7; ctx.strokeStyle = '#6b3e1d'; ctx.lineWidth = 1.3; ctx.setLineDash([7, 4, 1.5, 4]);
+      A.BORDERS.forEach((b) => { ctx.beginPath(); b.forEach((pt, i) => { const q = proj(pt[0], pt[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.stroke(); });
+      ctx.setLineDash([]); ctx.globalAlpha = pol; ctx.textAlign = 'center';
+      A.COUNTRIES.forEach((c) => { const q = proj(c.lon, c.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -20 || q[1] > h + 20) return; const fs = Math.max(10, Math.min(c.big ? 22 : 16, M.k * (c.big ? 0.72 : 0.5))); ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.fillStyle = 'rgba(107,62,29,0.62)'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(228,214,173,0.55)'; const tx = c.n[A.lang] || c.n.en; ctx.strokeText(tx.toUpperCase(), q[0], q[1]); ctx.fillText(tx.toUpperCase(), q[0], q[1]); });
+      ctx.restore();
+    }
+    // free-standing landmarks
+    if (M.k > 7) { const ls = Math.max(15, Math.min(34, M.k * 1.05)); A.LANDMARKS.forEach((m) => { const q = proj(m.lon, m.lat); if (q[0] < -30 || q[0] > w + 30 || q[1] < -10 || q[1] > h + 40) return; A.drawLandmark(ctx, m.t, q[0], q[1], ls); }); }
     // sea labels
-    ctx.fillStyle = 'rgba(91,67,38,0.55)'; ctx.font = 'italic ' + Math.max(11, M.k * 0.9) + 'px Georgia, serif'; ctx.textAlign = 'center';
-    [[A.t('sea.med'), 17, 34], [A.t('sea.adriatic'), 15.8, 43], [A.t('sea.aegean'), 25, 38.9], [A.t('sea.tyrrhenian'), 12, 39.8], [A.t('sea.black'), 33, 43.7]].forEach((s) => { const q = proj(s[1], s[2]); ctx.fillText(s[0], q[0], q[1]); });
+    ctx.fillStyle = 'rgba(91,67,38,0.55)'; ctx.font = 'italic ' + Math.max(10, Math.min(22, M.k * 0.9)) + 'px Georgia, serif'; ctx.textAlign = 'center';
+    [['sea.med', 17, 34], ['sea.adriatic', 15.8, 43], ['sea.aegean', 25, 38.9], ['sea.tyrrhenian', 12, 39.8], ['sea.black', 34, 43.4], ['sea.atlantic', -7.5, 41], ['sea.red', 38.8, 19.5], ['sea.persian', 52.2, 27], ['sea.caspian', 50.8, 42], ['sea.arabian', 64, 16], ['sea.bengal', 88, 14], ['sea.indian', 80, 0], ['sea.scs', 114, 12], ['sea.andaman', 96.5, 10.5]].forEach((s2) => { const q = proj(s2[1], s2[2]); ctx.fillText(A.t(s2[0]), q[0], q[1]); });
   }
 
   function drawDanger() {
@@ -164,18 +175,33 @@
   }
 
   function drawPorts() {
-    const S = R.S(); const lang = A.lang;
-    A.PORTS.forEach((p) => {
-      const q = proj(p.lon, p.lat); if (q[0] < -60 || q[0] > w + 60 || q[1] < -30 || q[1] > h + 30) return;
-      const sel = M.sel === p.id, here = S && S.port === p.id;
+    const S = R.S(); const lang = A.lang; const placed = []; const fs = Math.max(10, Math.min(15, M.k * 0.9)); const lm = Math.max(16, Math.min(32, M.k * 1.0));
+    const order = A.PORTS.slice().sort((a, b) => (b.id === M.sel ? 2 : 0) + (S && S.port === b.id ? 1 : 0) - ((a.id === M.sel ? 2 : 0) + (S && S.port === a.id ? 1 : 0)) || (b.yard ? 1 : 0) - (a.yard ? 1 : 0));
+    ctx.font = '600 ' + fs + 'px Georgia, serif';
+    const draws = [];
+    order.forEach((p) => {
+      const q = proj(p.lon, p.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -40 || q[1] > h + 40) return;
+      const sel = M.sel === p.id; const name = p.n[lang]; const tw = ctx.measureText(name).width; const showGoods = M.k > 9 || sel; const bh = fs + 6 + (showGoods ? 17 : 0); const bwid = Math.max(tw + 10, showGoods ? 3 * 17 + 6 : 0);
+      const cand = [[q[0] + 8, q[1] + 6], [q[0] - bwid - 8, q[1] + 6], [q[0] - bwid / 2, q[1] + 10], [q[0] + 8, q[1] - bh - 4], [q[0] - bwid - 8, q[1] - bh - 4], [q[0] - bwid / 2, q[1] - bh - 14]];
+      let spot = null;
+      for (const c of cand) { const r = [c[0], c[1], bwid, bh]; if (!placed.some((o) => r[0] < o[0] + o[2] && r[0] + r[2] > o[0] && r[1] < o[1] + o[3] && r[1] + r[3] > o[1])) { spot = r; break; } }
+      if (!spot && sel) spot = [cand[0][0], cand[0][1], bwid, bh];
+      if (spot) placed.push(spot);
+      draws.push({ p, q, spot, sel, name, showGoods, bwid, bh });
+    });
+    draws.forEach((d) => {
+      const { p, q, spot, sel } = d; const here = S && S.port === p.id;
+      if (spot) { ctx.fillStyle = 'rgba(244,234,206,0.82)'; ctx.strokeStyle = 'rgba(91,67,38,0.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(spot[0], spot[1], spot[2], spot[3], 5); ctx.fill(); ctx.stroke(); }
+      if (M.k > 8 && p.lm) A.drawLandmark(ctx, p.lm, q[0] - lm * 0.7, q[1] - 4, lm);
       if (sel) { ctx.strokeStyle = 'rgba(138,59,36,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q[0], q[1], 11 + Math.sin(time * 4) * 2, 0, 6.3); ctx.stroke(); }
       ctx.fillStyle = here ? '#8a3b24' : '#f6ecd0'; ctx.strokeStyle = '#2c1d0e'; ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.arc(q[0], q[1], 5.5, 0, 6.3); ctx.fill(); ctx.stroke();
       if (p.yard) icon(A.ICONS.anchor, q[0] + 11, q[1] - 11, 0.62, '#2c1d0e', 2.4);
       if (S && S.skulls.indexOf(p.id) >= 0) { const bob = Math.sin(time * 3) * 1.5; ctx.fillStyle = 'rgba(246,236,208,0.85)'; ctx.beginPath(); ctx.arc(q[0], q[1] - 20 + bob, 9.5, 0, 6.3); ctx.fill(); icon(A.ICONS.skull, q[0], q[1] - 20 + bob, 0.62, '#8a1f14', 2.2); }
-      ctx.font = '600 ' + Math.max(11, Math.min(15, M.k * 0.9)) + 'px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#2c1d0e';
-      const lx = q[0] + 9, ly = q[1] + 15; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(236,220,182,0.85)'; ctx.strokeText(p.n[lang], lx, ly); ctx.fillText(p.n[lang], lx, ly);
-      if (M.k > 12 || sel) { p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, lx + i * 17, ly + 3, 16, 16); }); }
+      if (spot) {
+        ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + 5, spot[1] + fs);
+        if (d.showGoods) p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, spot[0] + 3 + i * 17, spot[1] + fs + 5, 16, 16); });
+      }
     });
   }
 

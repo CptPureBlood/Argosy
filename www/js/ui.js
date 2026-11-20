@@ -42,7 +42,7 @@
         h('span', { class: 'tc' }, A.icon('ship', 14), ' ' + R.cargoCount() + '/' + R.fleetCap())));
     keep.forEach((k) => top.append(k));
   };
-  const NAVS = [['port', 'market', 'nav.port'], ['map', 'compass', 'nav.map'], ['fleet', 'ship', 'nav.fleet'], ['quests', 'scroll', 'nav.quests'], ['menu', 'menu', 'nav.menu']];
+  const NAVS = [['port', 'market', 'nav.port'], ['map', 'compass', 'nav.map'], ['fleet', 'ship', 'nav.fleet'], ['quests', 'crew', 'nav.mayor'], ['menu', 'menu', 'nav.menu']];
   U.renderNav = function () {
     $('nav').replaceChildren(...NAVS.map(([id, ic, key]) => h('button', { class: 'navb' + (U.screen === id ? ' on' : ''), onClick: () => U.go(id) }, A.icon(ic, 21), h('span', {}, t(key)))));
   };
@@ -80,10 +80,11 @@
     const tabs = h('div', { class: 'seg' },
       h('button', { class: U.tab === 'market' ? 'on' : '', onClick: () => { U.tab = 'market'; rerender(); } }, t('tab.market')),
       p.yard ? h('button', { class: U.tab === 'yard' ? 'on' : '', onClick: () => { U.tab = 'yard'; rerender(); } }, t('tab.yard')) : null,
+      h('button', { class: U.tab === 'tavern' ? 'on' : '', onClick: () => { U.tab = 'tavern'; rerender(); } }, t('tab.tavern')),
       h('button', { onClick: () => { R.rest(); A.audio.gullsStart(); A.toast(t('port.rested')); rerender(); } }, t('port.rest')),
       h('button', { class: 'go', onClick: () => U.go('map') }, t('port.depart')));
     if (U.tab === 'yard' && !p.yard) U.tab = 'market';
-    return h('div', { class: 'scr port' }, head, tabs, U.tab === 'market' ? marketBody(p) : yardBody(p));
+    return h('div', { class: 'scr port' }, head, tabs, U.tab === 'market' ? marketBody(p) : U.tab === 'tavern' ? tavernBody(p) : yardBody(p));
   }
 
   function marketBody(p) {
@@ -222,6 +223,7 @@
     A.toast(t('arr.msg', { p: A.name(A.port(a.port)), d: a.days }) + ' ' + t('arr.morale', { n: sign + a.dm }), a.dm < 0 ? 'bad' : '');
     U.tab = 'market'; U.sel = null; A.map.sel = null; A.map.preview = null;
     U.go('port');
+    setTimeout(() => { const pid = a.port; if (!R.hasMet(pid) || R.eventsAt(pid).length) U.mayorModal(pid); }, 900);
   }
 
   function showEncounter(zone) {
@@ -290,25 +292,74 @@
     return h('div', { class: 'scr list pad' },
       h('div', { class: 'sumcard' }, h('div', {}, h('b', {}, t('fleet.cap')), ' ' + R.cargoCount() + '/' + R.fleetCap()), h('div', {}, h('b', {}, t('fleet.speed')), ' ' + R.fleetSpeed().toFixed(1)), h('div', {}, h('b', {}, t('fleet.morale')), ' ' + Math.round(s.morale) + ' · ' + t(moraleKey(s.morale))), h('p', { class: 'sub' }, t('fleet.moraleHelp'))),
       h('h3', {}, t('fleet.ships') + ' (' + s.ships.length + '/' + C.MAX_FLEET + ')'), cards,
+      h('h3', {}, t('fleet.captains') + ' (' + s.captains.length + '/' + R.captainSlots() + ')'), s.captains.length ? s.captains.map(captainRow) : h('p', { class: 'sub' }, t('fleet.noCaptains')),
       h('h3', {}, t('fleet.cargo')), cargo,
       h('h3', {}, t('fleet.rep')), repList.length ? repList : h('p', { class: 'sub' }, t('fleet.noRep')));
   }
 
   // ------------------------------------------------------------------ QUESTS
+  const portrait = (look, size) => h('span', { class: 'portrait', html: A.portrait(look, size) });
+  function capLook(name) {
+    let x = 0; for (let i = 0; i < name.length; i++) x = (x * 31 + name.charCodeAt(i)) >>> 0;
+    const pk = (a, k) => a[(x >>> k) % a.length];
+    return { sk: pk(['#e8bf94', '#d9a877', '#c58c5a', '#a06a3f', '#7a4a2a', '#e8c08a'], 1), rb: pk(['#2f4f7a', '#7a2430', '#3a6a5a', '#5a3a6a', '#8a5a2a', '#2a4a6a'], 4), hat: pk(['cap', 'beret', 'turban', 'hood', 'fez', 'kufi', 'conical'], 7), hc: pk(['#2f4f7a', '#8a3b24', '#e8e2d0', '#3a6a5a', '#6a2a4a'], 10), bd: pk(['none', 'short', 'mustache', 'long'], 13), bc: '#3a2a1a', ac: '#d9a93a' };
+  }
+  const rarName = (r) => t('rar.' + r);
+  function captainRow(c, hire) {
+    const pk = A.PERK_BY_ID[c.perk]; const s = S();
+    return h('div', { class: 'card captain rar-' + c.rar }, portrait(capLook(c.name), 52),
+      h('div', { class: 'info' }, h('b', {}, c.name), h('span', { class: 'perk' }, h('i', { class: 'rar rar-' + c.rar }, rarName(c.rar)), ' ' + A.name(pk)), h('span', { class: 'sub' }, pk.d[A.lang] || pk.d.en),
+        h('span', { class: 'sub' }, hire ? t('tavern.cost', { f: A.fmt(c.fee), w: c.wage }) : t('tavern.wage', { w: c.wage }))),
+      hire ? h('button', { class: 'btn sm', disabled: s.gold < c.fee || s.captains.length >= R.captainSlots(), onClick: () => { if (R.hireCaptain(c.id)) { A.audio.coin(); A.toast(t('tavern.hired', { n: c.name })); } rerender(); } }, t('tavern.hire'))
+        : h('button', { class: 'btn sm ghost', onClick: () => { R.dismissCaptain(c.id); rerender(); } }, t('tavern.dismiss')));
+  }
+  function tavernBody() {
+    const s = S(); const list = R.tavern(s.port);
+    return h('div', { class: 'list yard' },
+      h('p', { class: 'sub tavhint' }, t('tavern.intro', { a: s.captains.length, b: R.captainSlots() })),
+      h('h3', {}, t('tavern.title')), list.length ? list.map((c) => captainRow(c, true)) : h('p', { class: 'sub' }, t('tavern.none')),
+      s.captains.length ? [h('h3', {}, t('tavern.yours')), s.captains.map((c) => captainRow(c, false))] : null,
+      h('h3', {}, t('tavern.crew')), h('button', { class: 'btn big', disabled: s.gold < R.treatCost() || s.treatDay === s.day, onClick: () => { if (R.treatCrew()) { A.audio.coin(); A.toast(t('tavern.treated')); } rerender(); } }, t('tavern.treat', { c: A.fmt(R.treatCost()) })));
+  }
+
+  U.mayorModal = function (portId) {
+    const m = R.mayor(portId); if (!m) return; const first = !R.hasMet(portId); R.meet(portId);
+    const evs = R.eventsAt(portId).map(R.eventText).slice(0, 2);
+    const news = evs.map((e) => h('div', { class: 'news' }, h('b', {}, e.title), h('div', { class: 'sub' }, e.text)));
+    U.modal({ title: '', cls: 'mayor', body: h('div', { class: 'mayorbox' },
+      h('div', { class: 'mtop' }, portrait(m.look, 88), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, m.title[A.lang] || m.title.en))),
+      h('p', { class: 'bubble' }, first ? (m.say[A.lang] || m.say.en) : t('mayor.back')), news.length ? [h('div', { class: 'lbl' }, t('mayor.news')), news] : null),
+      buttons: [{ label: t('mayor.visit'), kind: 'go', onClick: () => { U.go('quests'); } }, { label: t('mayor.ok'), kind: 'ghost' }] });
+  };
+
   function renderQuests() {
-    const s = S();
-    const act = s.quests.map((q) => {
+    const s = S(); const p = s.port && A.port(s.port); const m = p && R.mayor(p.id);
+    const questCard = (q, active) => {
       const g = A.GOOD_BY_ID[q.good]; const have = Math.min(q.qty, s.cargo[q.good] || 0);
-      return h('div', { class: 'card quest' }, h('div', { class: 'qtop' }, A.goodIcon(q.good, 26), h('div', { class: 'info' }, h('b', {}, t('q.title', { q: q.qty, g: A.name(g) })), h('span', { class: 'sub' }, t('q.to', { p: A.name(A.port(q.to)), d: Math.max(0, q.deadline - s.day) }))), h('b', { class: 'reward' }, '+' + A.fmt(q.reward))),
-        h('div', { class: 'qbar' }, bar((have / q.qty) * 100), h('span', {}, have + '/' + q.qty), h('button', { class: 'btn sm', disabled: !R.canComplete(q), onClick: () => { if (R.completeQuest(q.id)) { A.audio.coin(); A.toast(t('q.done', { n: A.fmt(q.reward) })); } rerender(); } }, t('q.deliver'))));
-    });
-    const offers = s.port ? R.offers().map((q) => {
-      const g = A.GOOD_BY_ID[q.good];
-      return h('div', { class: 'card quest' }, h('div', { class: 'qtop' }, A.goodIcon(q.good, 26), h('div', { class: 'info' }, h('b', {}, t('q.title', { q: q.qty, g: A.name(g) })), h('span', { class: 'sub' }, t('q.to', { p: A.name(A.port(q.to)), d: q.deadline - s.day }))), h('b', { class: 'reward' }, '+' + A.fmt(q.reward))),
-        h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.quests.length >= 3, onClick: () => { R.acceptQuest(q.id); rerender(); } }, t('q.accept'))));
-    }) : [];
-    return h('div', { class: 'scr list pad' }, h('h3', {}, t('q.active') + ' (' + s.quests.length + '/3)'), act.length ? act : h('p', { class: 'sub' }, t('q.none')),
-      s.port ? [h('h3', {}, t('q.offers', { p: A.name(A.port(s.port)) })), offers.length ? offers : h('p', { class: 'sub' }, t('q.noOffers'))] : null);
+      return h('div', { class: 'card quest' }, h('div', { class: 'qtop' }, A.goodIcon(q.good, 28), h('div', { class: 'info' }, h('b', {}, t('q.title', { q: q.qty, g: A.name(g) })), h('span', { class: 'sub' }, t('q.to', { p: A.name(A.port(q.to)), d: Math.max(0, q.deadline - s.day) }))), h('b', { class: 'reward' }, '+' + A.fmt(q.reward))),
+        active ? h('div', { class: 'qbar' }, bar((have / q.qty) * 100), h('span', {}, have + '/' + q.qty), h('button', { class: 'btn sm', disabled: !R.canComplete(q), onClick: () => { if (R.completeQuest(q.id)) { A.audio.coin(); A.toast(t('q.done', { n: A.fmt(q.reward) })); } rerender(); } }, t('q.deliver')))
+          : h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.quests.length >= 3, onClick: () => { R.acceptQuest(q.id); rerender(); } }, t('q.accept'))));
+    };
+    const head = m ? h('div', { class: 'card mayorcard' }, portrait(m.look, 64), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, (m.title[A.lang] || m.title.en) + ' · ' + A.name(p)), h('span', { class: 'sub' }, t('mayor.hello')))) : h('p', { class: 'sub' }, t('mayor.atSea'));
+    const evs = p ? R.eventsAt(p.id).map(R.eventText) : [];
+    const news = h('div', {}, evs.length ? evs.map((e) => h('div', { class: 'card news' }, h('b', {}, e.title), h('div', { class: 'sub' }, e.text), h('div', { class: 'evg' }, e.goods.slice(0, 6).map((g) => h('span', { class: 'chip ' + (g[1] > 1 ? 'd' : 'p') }, A.goodIcon(g[0], 15), h('b', {}, (g[1] > 1 ? '▲' : '▼') + Math.abs(Math.round((g[1] - 1) * 100)) + '%'))), h('span', { class: 'sub' }, t('mayor.days', { n: e.left }))))) : h('p', { class: 'sub' }, t('mayor.noNews')));
+    const offers = p ? R.offers().map((q) => questCard(q, false)) : [];
+    let loan = null;
+    if (p) {
+      const lim = R.loanLimit(p.id), rate = R.loanRate(p.id);
+      loan = h('div', { class: 'card' }, h('div', { class: 'sub' }, t('loan.info', { lim: A.fmt(lim), r: (rate * 100).toFixed(2) })),
+        h('div', { class: 'acts' }, [500, 1000, 2000].map((n) => h('button', { class: 'btn sm', disabled: lim < n, onClick: () => { if (R.takeLoan(n)) { A.audio.coin(); U.floatGold('+' + A.fmt(n), 'pos'); } rerender(); } }, '+' + A.fmt(n))), h('button', { class: 'btn sm', disabled: lim < 100, onClick: () => { const n = R.takeLoan(lim); if (n) { A.audio.coin(); U.floatGold('+' + A.fmt(n), 'pos'); } rerender(); } }, t('loan.max'))));
+    }
+    const loans = s.loans.length ? [h('h3', {}, t('loan.yours')), s.loans.map((l) => {
+      const dl = l.due - s.day;
+      return h('div', { class: 'card loan' + (dl < 0 ? ' late' : '') }, h('div', { class: 'info' }, h('b', {}, t('loan.line', { p: A.name(A.port(l.port)), b: A.fmt(l.balance) })), h('span', { class: 'sub' }, dl >= 0 ? t('loan.due', { d: dl, r: (l.rate * 100).toFixed(2) }) : t('loan.late'))),
+        h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.gold < 100, onClick: () => { R.repayLoan(l.id, 500); rerender(); } }, t('loan.repay', { n: 500 })), h('button', { class: 'btn sm', disabled: s.gold < Math.ceil(l.balance), onClick: () => { R.repayLoan(l.id, Math.ceil(l.balance)); A.audio.coin(); rerender(); } }, t('loan.repayAll'))));
+    })] : null;
+    return h('div', { class: 'scr list pad' }, head,
+      p ? [h('h3', {}, t('mayor.news')), news] : null,
+      h('h3', {}, t('q.active') + ' (' + s.quests.length + '/3)'), s.quests.length ? s.quests.map((q) => questCard(q, true)) : h('p', { class: 'sub' }, t('q.none')),
+      p ? [h('h3', {}, t('q.offers', { p: A.name(p) })), offers.length ? offers : h('p', { class: 'sub' }, t('q.noOffers')), h('h3', {}, t('loan.title')), loan] : null,
+      loans);
   }
 
   // ------------------------------------------------------------------ MENU
@@ -341,6 +392,7 @@
     U.screen = 'port'; U.renderNav(); U.go(S().voyage ? 'map' : 'port');
     if (S().voyage) U.resumeIfAtSea();
     setTimeout(() => A.audio.gong(), 250);
+    if (!S().voyage) setTimeout(() => { const pid = S().port; if (pid && (!R.hasMet(pid) || (fresh && R.eventsAt(pid).length))) U.mayorModal(pid); }, 900);
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden && S()) R.save(); });
 })(typeof globalThis !== 'undefined' ? globalThis : window);

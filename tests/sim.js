@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 global.window = global;
 const root = path.join(__dirname, '..', 'www', 'js');
-['data.js', 'world.js', 'game.js', 'i18n.js'].forEach((f) => require(path.join(root, f)));
+['data.js', 'world-data.js', 'ports.js', 'world.js', 'game.js', 'content.js', 'game2.js', 'i18n.js'].forEach((f) => require(path.join(root, f)));
 const A = global.A, R = A.game, W = A.world;
 
 let failed = 0;
@@ -40,7 +40,7 @@ const cv = S.ships[1];
 ok(R.buyCannons(cv.id, 3) === 3, 'buy cannons');
 ok(R.buyCannons(cv.id, 99) <= A.SHIPS.caravel.cannons, 'cannon limit enforced');
 ok(R.hireCrew(cv.id, 5) === 5, 'hire crew');
-S.port = 'marseille';
+S.port = 'naples';
 ok(!R.buyShip('galley'), 'no shipyard in Marseille');
 S.port = 'venice';
 

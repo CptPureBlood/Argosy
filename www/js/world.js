@@ -49,8 +49,9 @@
 
   W.build = function () {
     if (W.land) return;
+    W.building = true;
     const land = new Uint8Array(W.cols * W.rows);
-    const polys = [A.EURASIA, A.AFRICA].concat(A.ISLANDS);
+    const polys = [A.OLDWORLD].concat(A.ISLANDS);
     const bbs = polys.map((p) => {
       let a = 1e9, b = -1e9, c = 1e9, d = -1e9;
       p.forEach((q) => { a = Math.min(a, q[0]); b = Math.max(b, q[0]); c = Math.min(c, q[1]); d = Math.max(d, q[1]); });
@@ -66,7 +67,7 @@
           if (lon < bb[0] || lon > bb[1] || lat < bb[2] || lat > bb[3]) continue;
           if (inPoly(lon, lat, polys[k])) isLand = true;
         }
-        if (isLand && inPoly(lon, lat, A.BLACK_SEA)) isLand = false;
+        if (isLand) for (const wp of A.WATERS) { if (inPoly(lon, lat, wp)) { isLand = false; break; } }
         if (isLand) {
           for (const ch of A.CHANNELS) {
             for (let s = 0; s < ch.pts.length - 1; s++) {
@@ -79,6 +80,7 @@
       }
     }
     W.land = land;
+    W.cols0 = W.cols;
     // coast-adjacent flag (cost penalty keeps routes slightly off the shore)
     W.nearCoast = new Uint8Array(land.length);
     for (let j = 0; j < W.rows; j++)
@@ -90,8 +92,17 @@
             if (ii >= 0 && jj >= 0 && ii < W.cols && jj < W.rows && land[jj * W.cols + ii]) W.nearCoast[j * W.cols + i] = 1;
           }
       }
+    W.snapPorts();
   };
 
+  // keep every port marker on water so routes and markers agree
+  W.snapPorts = function () {
+    A.PORTS.forEach((p) => {
+      if (p._snapped) return; const c = W.toCell(p.lon, p.lat);
+      if (W.isLandCell(c[0], c[1])) { const s = W.nearestSea(p.lon, p.lat); p.lon = W.cellLon(s[0]); p.lat = W.cellLat(s[1]); }
+      p._snapped = true;
+    });
+  };
   W.isLandCell = (i, j) => i < 0 || j < 0 || i >= W.cols || j >= W.rows || W.land[j * W.cols + i] === 1;
   W.isLand = (lon, lat) => { const c = W.toCell(lon, lat); return W.isLandCell(c[0], c[1]); };
 

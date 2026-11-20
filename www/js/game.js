@@ -32,9 +32,9 @@
       exp: o.exp != null ? o.exp : 2, cannons: o.cannons != null ? o.cannons : Math.floor(t.cannons * 0.3),
     };
   };
-  R.shipSpeed = (s) => T(s.type).speed * (0.7 + 0.3 * (s.hull / T(s.type).hull));
+  R.shipSpeed = (s) => T(s.type).speed * (0.7 + 0.3 * (s.hull / T(s.type).hull)) * R.speedMod();
   R.fleetSpeed = () => (S.ships.length ? Math.min.apply(null, S.ships.map(R.shipSpeed)) : 0);
-  R.fleetCap = () => S.ships.reduce((a, s) => a + T(s.type).cap, 0);
+  R.fleetCap = () => Math.floor(S.ships.reduce((a, s) => a + T(s.type).cap, 0) * R.capMod());
   R.cargoCount = () => Object.values(S.cargo).reduce((a, b) => a + b, 0);
   R.power = (s) => s.cannons * 3 + s.hull / 12 + s.crew / 6;
   R.fleetPower = () => S.ships.reduce((a, s) => a + R.power(s), 0);
@@ -61,15 +61,15 @@
   function priceAt(portId, goodId, stock) {
     const m = S.market[portId][goodId];
     const mult = clamp(Math.sqrt(m.ref / (Math.max(0, stock) + 3)), 0.55, 2.4);
-    return A.GOOD_BY_ID[goodId].base * TIER[tier(portId, goodId)] * mult;
+    return A.GOOD_BY_ID[goodId].base * TIER[tier(portId, goodId)] * mult * (R.evMult ? R.evMult(portId, goodId) : 1);
   }
   const repOf = (portId) => S.rep[portId] || 0;
   R.rep = repOf;
-  R.buyPrice = (portId, goodId, stock) => Math.max(1, Math.round(priceAt(portId, goodId, stock != null ? stock : S.market[portId][goodId].stock) * (1 - repOf(portId) * 0.0008)));
-  R.sellPrice = (portId, goodId, stock) => Math.max(1, Math.round(priceAt(portId, goodId, stock != null ? stock : S.market[portId][goodId].stock) * 0.94 * (1 + repOf(portId) * 0.0008)));
+  R.buyPrice = (portId, goodId, stock) => Math.max(1, Math.round(priceAt(portId, goodId, stock != null ? stock : S.market[portId][goodId].stock) * (1 - repOf(portId) * 0.0008) * R.pBuy()));
+  R.sellPrice = (portId, goodId, stock) => Math.max(1, Math.round(priceAt(portId, goodId, stock != null ? stock : S.market[portId][goodId].stock) * 0.94 * (1 + repOf(portId) * 0.0008) * R.pSell()));
   R.stock = (portId, goodId) => Math.floor(S.market[portId][goodId].stock);
   R.trendPct = (portId, goodId) => Math.round((R.buyPrice(portId, goodId) / A.GOOD_BY_ID[goodId].base - 1) * 100);
-  function addRep(portId, v) { S.rep[portId] = clamp(repOf(portId) + v, 0, 100); }
+  function addRep(portId, v) { S.rep[portId] = clamp(repOf(portId) + (v > 0 ? v * R.repMod() : v), 0, 100); }
 
   R.quoteBuy = function (goodId, q) {
     const p = S.port; const m = S.market[p][goodId];
@@ -141,7 +141,7 @@
   function mkPirate(type) {
     const t = T(type);
     const sc = clamp(0.55 + S.day / 70, 0.55, 1); // early-game pirates are poorly armed
-    return { id: 'e' + (S.nextId++), type, name: pick(A.PIRATE_NAMES), hull: Math.round(t.hull * rnd(0.7, 1) * (0.6 + 0.4 * sc)), crew: Math.max(3, Math.round(ri(t.crewMin, t.crewMax) * sc)), exp: Math.round(clamp(0.5 + S.day / 25 + rnd(0, 1.5), 0.5, 7) * 10) / 10, cannons: Math.max(1, Math.round(t.cannons * rnd(0.35, 0.9) * sc)) };
+    return { id: 'e' + (S.nextId++), type, name: pick(A.PIRATE_NAMES), hull: Math.round(t.hull * rnd(0.7, 1) * (0.6 + 0.4 * sc) * 0.6), crew: Math.max(3, Math.round(ri(t.crewMin, t.crewMax) * sc * 0.6)), exp: Math.round(clamp(0.5 + S.day / 25 + rnd(0, 1.5), 0.5, 7) * 10) / 10, cannons: Math.max(1, Math.round(t.cannons * rnd(0.35, 0.9) * sc * 0.6)) };
   }
   R.genPirates = function (zone) {
     const mine = R.fleetPower() + (S.escortShip ? R.power(S.escortShip) * 0.5 : 0);
@@ -188,7 +188,8 @@
       const m = S.market[p.id][g.id];
       m.stock = Math.max(0, m.stock + (m.ref - m.stock) * 0.06 + rnd(-1, 1) * m.ref * 0.02);
     }));
-    const up = Math.round(S.ships.reduce((a, s) => a + s.crew, 0) * C.UPKEEP_PER_CREW);
+    const up = Math.round(S.ships.reduce((a, s) => a + s.crew, 0) * C.UPKEEP_PER_CREW * R.upkeepMod()) + R.wages();
+    R.dailyLife();
     S.gold -= up; let broke = false;
     if (S.gold < 0) { S.gold = 0; S.morale = clamp(S.morale - 4, 0, 100); broke = true; }
     if (S.day >= S.skullUntil) rollSkulls();
@@ -212,18 +213,19 @@
     if (d.broke) events.push({ type: 'broke' });
     d.expired.forEach((q) => events.push({ type: 'questExpired', q }));
     const np = A.world.posAt(r, v.travelled);
-    if (Math.random() < 0.03 + 0.035 * S.wind.str) {
-      const sh = pick(S.ships); sh.hull = Math.max(1, sh.hull - T(sh.type).hull * rnd(0.05, 0.15));
+    if (Math.random() < (0.011 + 0.011 * S.wind.str) * R.stormMod()) {
+      const sh = pick(S.ships); if (!R.has('weather')) sh.hull = Math.max(1, sh.hull - T(sh.type).hull * rnd(0.03, 0.08));
       let lost = {};
-      Object.keys(S.cargo).forEach((g) => { const q = Math.floor(S.cargo[g] * rnd(0.03, 0.1)); if (q > 0) { lost[g] = q; S.cargo[g] -= q; if (S.cargo[g] <= 0) delete S.cargo[g]; } });
+      Object.keys(S.cargo).forEach((g) => { const q = Math.floor(S.cargo[g] * rnd(0.02, 0.06)); if (q > 0) { lost[g] = q; S.cargo[g] -= q; if (S.cargo[g] <= 0) delete S.cargo[g]; } });
       S.morale = clamp(S.morale - 3, 0, 100);
       events.push({ type: 'storm', ship: sh.name, lost, refund: R.refundLoss(lost) });
     }
     const zone = R.zone(np.lon, np.lat);
     const early = S.day < 6 ? 0 : S.day < 14 ? 0.5 : 1;
-    let pc = (0.03 + 0.3 * zone) * early * (S.escort ? 0.85 : 1);
+    let pc = (0.03 + 0.3 * zone) * early * (S.escort ? 0.85 : 1) * R.lookoutMod();
     if (v.total - v.travelled < 35) pc = 0;
     if (Math.random() < pc) events.push({ type: 'pirates', zone });
+    if (R.has('shipwright')) S.ships.forEach((sh) => { sh.hull = Math.min(T(sh.type).hull, sh.hull + T(sh.type).hull * 0.01); });
     const arrived = v.travelled >= v.total - 0.01;
     if (!events.some((e) => e.type === 'pirates')) R.save();
     return { events, arrived, pos: np };
@@ -231,8 +233,8 @@
   R.arrive = function () {
     const v = S.voyage;
     const dm = R.moraleForDays(v.days);
-    S.morale = clamp(S.morale + dm, 0, 100);
-    const xp = Math.min(0.4, 0.06 + 0.04 * v.days); S.ships.forEach((sh) => { sh.exp = Math.min(10, Math.round((sh.exp + xp) * 100) / 100); });
+    S.morale = clamp(S.morale + dm + (R.has('cheer') ? 1 : 0), 0, 100);
+    const xp = Math.min(0.4, 0.06 + 0.04 * v.days) * (R.has('veterans') ? 2 : 1); S.ships.forEach((sh) => { sh.exp = Math.min(10, Math.round((sh.exp + xp) * 100) / 100); });
     S.port = v.to; S.voyage = null; S.insured = false; S.escort = null; S.escortShip = null;
     S.visited[S.port] = true; refreshOffers(S.port); R.save();
     return { days: v.days, dm, port: S.port };
@@ -274,10 +276,11 @@
     c.p.forEach((s) => init(s, 'p')); c.e.forEach((s) => init(s, 'e'));
     return c;
   };
-  function cooldown(s) { return clamp(4.4 - s.exp * 0.17 - (s._side === 'p' ? (S.morale - 50) * 0.01 : 0) + rnd(-0.3, 0.3), 1.8, 6); }
+  function cooldown(s) { return clamp((4.4 - s.exp * 0.17 - (s._side === 'p' ? (S.morale - 50) * 0.01 : 0) + rnd(-0.3, 0.3)) * (s._side === 'p' ? R.cdMod() : 1), 1.4, 6); }
   R.hitChance = function (s, t) {
     let h = 0.5 + s.exp * 0.03 - clamp((spd(t) - 6) * 0.03, -0.1, 0.12) + (s._side === 'p' ? (S.morale - 50) * 0.002 : 0);
     if (s.crew < s.cannons * 2) h *= 0.8;
+    if (s._side === 'p') h += R.hitBonus();
     return clamp(h, 0.2, 0.85);
   };
   function fire(c, s, foes) {
@@ -316,12 +319,12 @@
   R.boardChance = function (c) {
     const mine = alive(c.p), en = alive(c.e); if (!mine.length || !en.length) return 0;
     const crewRatio = clamp(avg(mine, (s) => s.crew) * mine.length / Math.max(1, avg(en, (s) => s.crew) * en.length) - 1, -1, 1);
-    return clamp(0.22 + 0.18 * (mine.length - 1) + 0.06 * (avg(mine, spd) - avg(en, spd)) + 0.03 * (avg(mine, (s) => s.exp) - avg(en, (s) => s.exp)) + 0.1 * crewRatio + (S.morale - 50) * 0.002, 0.05, 0.85);
+    return clamp(0.22 + 0.18 * (mine.length - 1) + 0.06 * (avg(mine, spd) - avg(en, spd)) + 0.03 * (avg(mine, (s) => s.exp) - avg(en, (s) => s.exp)) + 0.1 * crewRatio + (S.morale - 50) * 0.002 + R.discipline(), 0.05, 0.9);
   };
   R.fleeChance = function (c) {
     const mine = alive(c.p), en = alive(c.e); if (!mine.length || !en.length) return 0;
     const slow = Math.min.apply(null, mine.map(spd)), fast = Math.max.apply(null, en.map(spd));
-    return clamp(0.25 + 0.08 * (slow - fast) + 0.02 * avg(mine, (s) => s.exp) + (S.morale - 50) * 0.002 - 0.03 * (mine.length - 1), 0.1, 0.9);
+    return clamp(0.25 + 0.08 * (slow - fast) + 0.02 * avg(mine, (s) => s.exp) + (S.morale - 50) * 0.002 - 0.03 * (mine.length - 1) + R.discipline(), 0.1, 0.92);
   };
   R.board = function (c) {
     if (c.over || c.boardCd > 0) return null;
@@ -331,7 +334,7 @@
     if (ok) {
       en.sunk = true; en._captured = true;
       const t = T(en.type);
-      c.prizes.push({ type: en.type, name: en.name, hull: Math.round(clamp(en.hull, t.hull * 0.12, t.hull * 0.4)), crew: Math.max(3, Math.ceil(t.crewMin * 0.5)), exp: 2, cannons: Math.max(0, Math.floor(en.cannons / 2)) });
+      c.prizes.push({ type: en.type, name: en.name, hull: Math.round(R.has('privateer') ? clamp(en.hull, t.hull * 0.35, t.hull * 0.7) : clamp(en.hull, t.hull * 0.12, t.hull * 0.4)), crew: Math.max(3, Math.ceil(t.crewMin * 0.5)), exp: 2, cannons: Math.max(0, Math.floor(en.cannons / 2)) });
       c.events.push({ kind: 'board', ok: true, target: en.id });
       if (!alive(c.e).length) c.over = 'win';
     } else {
@@ -355,6 +358,7 @@
     const res = { result: c.over, gold: 0, goods: {}, refund: 0, lostCargo: {}, prizes: c.prizes, sunk: [] };
     const sunkMine = S.ships.filter((s) => s.sunk); res.sunk = sunkMine.map((s) => s.name);
     S.ships = S.ships.filter((s) => !s.sunk);
+    S.events = S.events || []; S.loans = S.loans || []; S.captains = S.captains || []; S.tavern = S.tavern || {}; S.met = S.met || {};
     S.ships.forEach((s) => { delete s.sunk; delete s._cd; delete s._cdm; delete s._side; });
     S.escortShip = null; S.escort = null;
     if (c.over === 'win') {
@@ -401,7 +405,7 @@
     const s = S.ships.find((x) => x.id === id); if (!s) return false;
     S.gold += R.shipSellValue(s); S.ships = S.ships.filter((x) => x.id !== id); clampCargo(); R.save(); return true;
   };
-  R.repairCost = (s) => Math.ceil((T(s.type).hull - s.hull) * C.REPAIR_PER_HULL);
+  R.repairCost = (s) => Math.ceil((T(s.type).hull - s.hull) * C.REPAIR_PER_HULL * (R.has('carpenter') ? 0.8 : 1));
   R.repair = function (id) {
     const s = S.ships.find((x) => x.id === id); if (!yard() || !s) return false;
     const c = R.repairCost(s); if (c <= 0 || S.gold < c) return false;
@@ -425,7 +429,7 @@
     S.offerDay[portId] = S.day; S.offers[portId] = [];
     const p = A.port(portId);
     for (let i = 0; i < ri(0, 2); i++) {
-      const dest = pick(A.PORTS.filter((x) => x.id !== portId));
+      const near = A.PORTS.filter((x) => x.id !== portId && A.nm(p.lon, p.lat, x.lon, x.lat) < 1800); const dest = pick(near.length ? near : A.PORTS.filter((x) => x.id !== portId));
       const g = pick(p.p); const base = A.GOOD_BY_ID[g].base; const qty = ri(6, 18);
       const nm = A.world.route(portId, dest.id).total;
       S.offers[portId].push({ id: S.nextId++, good: g, qty, from: portId, to: dest.id, deadline: S.day + Math.ceil(nm / 110) + ri(7, 11), reward: Math.round(qty * base * rnd(1.9, 2.4) + nm * 0.8), rep: ri(3, 6) });
@@ -446,7 +450,7 @@
 
   // ------------------------------------------------------------------ lifecycle
   R.newGame = function () {
-    S = { v: 1, day: 1, gold: C.START_GOLD, port: 'venice', ships: [], cargo: {}, basis: {}, morale: 70, wind: { dir: rnd(0, 360), str: 1.5 }, rep: {}, market: {}, skulls: [], skullUntil: 0, insured: false, escort: null, escortShip: null, quests: [], offers: {}, offerDay: {}, nextId: 1, stats: { trades: 0, wins: 0, losses: 0, profit: 0 }, voyage: null, visited: { venice: true } };
+    S = { v: 1, day: 1, gold: C.START_GOLD, port: 'venice', ships: [], cargo: {}, basis: {}, morale: 70, wind: { dir: rnd(0, 360), str: 1.5 }, rep: {}, market: {}, skulls: [], skullUntil: 0, insured: false, escort: null, escortShip: null, quests: [], offers: {}, offerDay: {}, nextId: 1, stats: { trades: 0, wins: 0, losses: 0, profit: 0 }, voyage: null, visited: { venice: true }, events: [], loans: [], captains: [], tavern: {}, met: {}, nextLoan: 1 };
     S.ships.push(R.mkShip('felucca', { cannons: 1 }));
     initMarket(); rollSkulls(); refreshOffers('venice'); R.save();
     return S;
