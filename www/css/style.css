@@ -162,3 +162,5 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 .pips { display: inline-flex; gap: 3px; margin-left: 4px; } .pips i { width: 9px; height: 9px; border: 2px solid #3b2a17; background: #e3d09f; display: inline-block; } .pips i.on { background: var(--gold); }
 .need { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .rn { cursor: pointer; text-decoration: underline dotted; }
+
+.xbtn { margin-left: auto; width: 30px; height: 30px; border: 2px solid #5a3a1c; background: #f3e6c0; border-radius: 6px; font-size: 15px; line-height: 1; color: #5a3a1c; flex: none; } .sh1 { align-items: center !important; } .sbody.hint { position: relative; } .sbody.hint .xbtn { position: absolute; right: 10px; top: 8px; }

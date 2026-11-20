@@ -180,7 +180,7 @@
         h('div', { class: 'seg' }, [1, 2, 4].map((m) => h('button', { class: voy.mul === m ? 'on' : '', onClick: () => { voy.mul = m; renderSheet(); } }, '×' + m)), h('button', { class: voy.paused ? 'on' : '', onClick: () => { voy.paused = !voy.paused; if (!voy.paused) voyTick(); renderSheet(); } }, voy.paused ? t('sea.resume') : t('sea.pause')))));
       return;
     }
-    if (!U.sel || U.sel === s.port) { sh.replaceChildren(h('div', { class: 'sbody hint' }, t(U.sel ? 'sheet.here' : 'sheet.hint'), h('div', { class: 'legend' }, h('span', {}, A.icon('anchor', 15), ' ' + t('legend.yard')), h('span', {}, A.icon('skull', 15), ' ' + t('legend.skull'))))); return; }
+    if (!U.sel || U.sel === s.port) { sh.replaceChildren(h('div', { class: 'sbody hint' }, U.sel ? h('button', { class: 'xbtn', onClick: () => { U.sel = null; selectDest(); } }, '✕') : null, t(U.sel ? 'sheet.here' : 'sheet.hint'), h('div', { class: 'legend' }, h('span', {}, A.icon('anchor', 15), ' ' + t('legend.yard')), h('span', {}, A.icon('skull', 15), ' ' + t('legend.skull'))))); return; }
     const d = A.port(U.sel), est = R.estimate(U.sel);
     const baseDays = est.nm / ((R.fleetSpeed() || 5) * C.NM_PER_KNOT_DAY); const wr = baseDays / est.days;
     const windTxt = wr > 1.06 ? t('sheet.tail') : wr < 0.94 ? t('sheet.head') : t('sheet.crosswind');
@@ -189,7 +189,7 @@
     const skulls = est.risk === 'high' ? 3 : est.risk === 'mid' ? 2 : 1;
     const esc = (id, label, cost) => h('button', { class: 'chipb' + ((s.escort || '') === id ? ' on' : ''), onClick: () => { R.cancelEscort(); if (id && !R.hireEscort(id)) A.toast(t('err.gold')); U.renderTop(); renderSheet(); } }, label + (cost ? ' · ' + cost : ''));
     sh.replaceChildren(h('div', { class: 'sbody' },
-      h('div', { class: 'sh1' }, h('b', {}, A.name(d)), h('span', {}, t('sheet.days', { n: est.days }) + ' · ' + t('sheet.nm', { n: Math.round(est.nm) }))),
+      h('div', { class: 'sh1' }, h('b', {}, A.name(d)), h('span', {}, t('sheet.days', { n: est.days }) + ' · ' + t('sheet.nm', { n: Math.round(est.nm) })), h('button', { class: 'xbtn', 'aria-label': 'close', onClick: () => { U.sel = null; selectDest(); } }, '✕')),
       h('div', { class: 'prow' }, d.p.map((g) => chip(g, 'p')), d.yard ? h('span', { class: 'badge' }, A.icon('anchor', 14), t('yard.badge')) : null),
       h('div', { class: 'sh2' }, h('span', {}, windTxt), h('span', { class: 'risk ' + est.risk }, [0, 1, 2].map((i) => h('span', { class: 'ic' + (i < skulls ? ' on' : ''), html: A.svg(A.ICONS.skull, 15) })), ' ' + t('risk.' + est.risk))),
       h('div', { class: 'opts' },

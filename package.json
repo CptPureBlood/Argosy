@@ -1,8 +1,8 @@
 {
-  "name": "argosy",
+  "name": "mare-nostrum",
   "version": "0.1.0",
   "private": true,
-  "description": "Argosy – a Mediterranean ship trading game (Tradewinds-inspired, original).",
+  "description": "Mare Nostrum – a Mediterranean ship trading game (Tradewinds-inspired, original).",
   "scripts": {
     "test": "node tests/sim.js"
   },
