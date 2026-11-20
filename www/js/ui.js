@@ -365,7 +365,7 @@
       const g = A.GOOD_BY_ID[q.good]; const have = Math.min(q.qty, s.cargo[q.good] || 0);
       return h('div', { class: 'card quest' }, h('div', { class: 'qtop' }, A.goodIcon(q.good, 28), h('div', { class: 'info' }, h('b', {}, t('q.title', { q: q.qty, g: A.name(g) })), h('span', { class: 'sub' }, t('q.to', { p: A.name(A.port(q.to)), d: Math.max(0, q.deadline - s.day) }))), h('b', { class: 'reward' }, '+' + A.fmt(q.reward))),
         active ? h('div', { class: 'qbar' }, bar((have / q.qty) * 100), h('span', {}, have + '/' + q.qty), h('button', { class: 'btn sm', disabled: !R.canComplete(q), onClick: () => { if (R.completeQuest(q.id)) { A.audio.coin(); A.toast(t('q.done', { n: A.fmt(q.reward) })); } rerender(); } }, t('q.deliver')))
-          : h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.quests.length >= 3, onClick: () => { R.acceptQuest(q.id); rerender(); } }, t('q.accept'))));
+          : h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.quests.length >= 3, onClick: () => { R.acceptQuest(q.id); A.audio.quill && A.audio.quill(); rerender(); } }, t('q.accept'))));
     };
     const head = m ? h('div', { class: 'card mayorcard' }, portrait(m.id, 64), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, (m.title[A.lang] || m.title.en) + ' · ' + A.name(p)), h('span', { class: 'sub' }, t('mayor.hello', { n: (s.profile && s.profile.name) || '' })))) : h('p', { class: 'sub' }, t('mayor.atSea'));
     const evs = p ? R.eventsAt(p.id).map(R.eventText) : [];

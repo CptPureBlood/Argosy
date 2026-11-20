@@ -188,6 +188,7 @@
     const c = AU.ctx; const s = c.createBufferSource(); s.buffer = buf[name]; s.loop = true; const g = c.createGain(); g.gain.value = 0; s.connect(g); g.connect(AU.master); s.start(); g.gain.linearRampToValueAtTime(vol, c.currentTime + 2); amb[name] = { s, g }; return true;
   }
   function ambOff(name) { const a = amb[name]; if (!a) return; delete amb[name]; const c = AU.ctx; try { a.g.gain.cancelScheduledValues(c.currentTime); a.g.gain.setValueAtTime(a.g.gain.value, c.currentTime); a.g.gain.linearRampToValueAtTime(0, c.currentTime + 1.2); a.s.stop(c.currentTime + 1.3); } catch (e) {} }
+  AU.ambOn = ambOn; AU.ambOff = ambOff;
   AU.seaStart = function () { ambOff('amb_harbor'); ambOn('amb_sea', 0.55); };
   AU.seaStop = function () { ambOff('amb_sea'); };
   AU.gullsStart = function () {

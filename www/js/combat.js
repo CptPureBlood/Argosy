@@ -10,7 +10,7 @@
     time = 0; projs = []; parts = []; floats = []; vis = {}; pos = {}; shake = 0; speed = 1; overT = 0; finished = false; lastBoom = 0;
     c.p.concat(c.e).forEach((s) => { vis[s.id] = { hull: s.hull, max: s.hull, sink: 0, sinking: false, flash: 0, phase: Math.random() * 6 }; });
     if (opts.enemyVolley) c.e.forEach((s) => s._cd.forEach((_, i) => { s._cd[i] = Math.min(s._cd[i], 0.2 + i * 0.15); }));
-    A.audio.gullsStop(); A.audio.battleStart && A.audio.battleStart();
+    A.audio.gullsStop(); A.audio.battleStart && A.audio.battleStart(); A.audio.ambOn && A.audio.ambOn('battle_tail', 0.35);
     cv = h('canvas', { class: 'combatcv' });
     ui = {};
     ui.title = h('div', { class: 'ctitle' }, t('combat.vs', { n: c.e.length }));
@@ -161,7 +161,7 @@
   }
 
   function finish() {
-    finished = true; cancelAnimationFrame(raf); window.removeEventListener('resize', resize);
+    finished = true; A.audio.ambOff && A.audio.ambOff('battle_tail'); cancelAnimationFrame(raf); window.removeEventListener('resize', resize);
     root.remove();
     const res = R.finishCombat(c);
     onDone && onDone(res, c);
