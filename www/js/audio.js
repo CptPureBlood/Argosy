@@ -77,17 +77,27 @@
   };
   AU.hit = function () {
     if (!ready()) return; const c = AU.ctx, t = c.currentTime;
-    const n = c.createBufferSource(); n.buffer = noiseBuf(0.2);
-    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 1100;
-    const g = c.createGain(); g.gain.setValueAtTime(0.16, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-    n.connect(f); f.connect(g); g.connect(AU.master); n.start(t);
+    // heavy thud
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.18);
+    const og = c.createGain(); og.gain.setValueAtTime(0.4, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.22); o.connect(og); og.connect(AU.master); o.start(t); o.stop(t + 0.25);
+    // splintering wood: a burst of short band-passed crackles
+    for (let i = 0; i < 7; i++) {
+      const tt = t + i * rnd(0.012, 0.045) + 0.005; const n = c.createBufferSource(); n.buffer = noiseBuf(0.08);
+      const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = rnd(500, 2200); f.Q.value = rnd(2, 6);
+      const g = c.createGain(); g.gain.setValueAtTime(rnd(0.18, 0.38), tt); g.gain.exponentialRampToValueAtTime(0.001, tt + rnd(0.03, 0.07));
+      n.connect(f); f.connect(g); g.connect(AU.master); n.start(tt);
+    }
+    // low crunch
+    const n2 = c.createBufferSource(); n2.buffer = noiseBuf(0.3); const f2 = c.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = 600;
+    const g2 = c.createGain(); g2.gain.setValueAtTime(0.3, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.28); n2.connect(f2); f2.connect(g2); g2.connect(AU.master); n2.start(t);
   };
   AU.splash = function () {
     if (!ready()) return; const c = AU.ctx, t = c.currentTime;
-    const n = c.createBufferSource(); n.buffer = noiseBuf(0.3);
-    const f = c.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1500;
-    const g = c.createGain(); g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    const n = c.createBufferSource(); n.buffer = noiseBuf(0.7);
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 0.8; f.frequency.setValueAtTime(2400, t); f.frequency.exponentialRampToValueAtTime(500, t + 0.5);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.3, t + 0.03); g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
     n.connect(f); f.connect(g); g.connect(AU.master); n.start(t);
+    [0, 0.09, 0.17].forEach((d, i) => { const o = c.createOscillator(); o.type = 'sine'; const b = 380 + i * 160; o.frequency.setValueAtTime(b, t + d); o.frequency.exponentialRampToValueAtTime(b * 2.2, t + d + 0.1); const og = c.createGain(); og.gain.setValueAtTime(0.0001, t + d); og.gain.linearRampToValueAtTime(0.05, t + d + 0.01); og.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.12); o.connect(og); og.connect(AU.master); o.start(t + d); o.stop(t + d + 0.14); });
   };
   AU.coin = function () {
     if (!ready()) return; const c = AU.ctx, t = c.currentTime;

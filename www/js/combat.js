@@ -34,11 +34,11 @@
   }
 
   function layout() {
-    [['p', c.p, 0.27], ['e', c.e, 0.73]].forEach(([side, arr, fx]) => {
-      const n = arr.length; const sp = (hh * 0.8) / Math.max(1, n); const hl0 = Math.min(78, sp * 0.46, w * 0.2);
+    [['p', c.p, 0.74], ['e', c.e, 0.27]].forEach(([side, arr, fy]) => {
+      const n = arr.length; const sp = (w * 0.94) / Math.max(1, n); const hl0 = Math.min(78, sp * 0.52, hh * 0.2);
       arr.forEach((s, i) => {
-        const T = A.SHIPS[s.type]; const hl = hl0 * (0.62 + T.len * 0.3);
-        pos[s.id] = { x: w * fx + (i % 2 ? 1 : -1) * (n > 1 ? w * 0.025 : 0), y: hh * 0.09 + sp * (i + 0.5) + hh * 0.02, u: hl, hl, bw: hl * (s.type === 'galley' ? 0.19 : s.type === 'felucca' ? 0.22 : s.type === 'caravel' ? 0.25 : 0.28), dir: side === 'p' ? 1 : -1 };
+        const T = A.SHIPS[s.type]; const hl = hl0 * (0.62 + T.len * 0.3); const bw = hl * (s.type === 'galley' ? 0.19 : s.type === 'felucca' ? 0.22 : s.type === 'caravel' ? 0.25 : 0.28);
+        pos[s.id] = { x: w * 0.03 + sp * (i + 0.5), y: hh * fy + (n > 1 ? (i % 2 ? 1 : -1) * hh * 0.035 : 0), u: hl, hl, bw, dir: side === 'p' ? 1 : -1 };
       });
     });
   }
@@ -49,14 +49,17 @@
       if (ev.kind === 'shot') {
         const a = find(ev.from), b = find(ev.to); if (!a || !b) continue;
         const pa = pos[a.id], pb = pos[b.id]; if (!pa || !pb) continue;
-        const idx = Math.max(0, a._cd ? Math.floor(Math.random() * a._cd.length) : 0); const per = Math.ceil((a._cd ? a._cd.length : 2) / 2); const sy0 = pa.y - pa.hl * 0.45 + (Math.floor(idx / 2) + 0.5) * (pa.hl * 0.95) / Math.max(per, 1); projs.push({ sx: pa.x + pa.dir * pa.bw, sy: sy0, tx: pb.x - pb.dir * pb.bw * 0.6 + (Math.random() - 0.5) * pb.bw, ty: pb.y + (Math.random() - 0.5) * pb.hl * 1.3, t: 0, dur: 1.15 + Math.random() * 0.35, ev, tid: b.id, trail: [] });
-        for (let i = 0; i < 7; i++) parts.push({ k: 'smoke', x: pa.x + pa.dir * (pa.bw + i * 2), y: sy0 + rnd(-3, 3), vx: pa.dir * rnd(10, 34), vy: rnd(-12, 12), r: rnd(4, 8), life: 0, max: rnd(1.0, 1.9) }); parts.push({ k: 'flash', x: pa.x + pa.dir * (pa.bw + 6), y: sy0, vx: 0, vy: 0, r: 11, life: 0, max: 0.16 });
+        const sx0 = pa.x + (Math.random() - 0.5) * pa.hl * 1.1; const sy0 = pa.y - pa.dir * pa.bw;
+        let tx, ty; if (ev.hit) { tx = pb.x + (Math.random() - 0.5) * pb.hl * 1.2; ty = pb.y + (Math.random() - 0.5) * pb.bw * 0.9; }
+        else { tx = pb.x + (Math.random() - 0.5) * pb.hl * 1.5; const far = Math.random() < 0.55; ty = far ? pb.y + pb.dir * (pb.bw + 12 + Math.random() * 34) * -1 : pb.y + pb.dir * (pb.bw + 12 + Math.random() * 30); }
+        projs.push({ sx: sx0, sy: sy0, tx, ty, t: 0, dur: 1.15 + Math.random() * 0.35, ev, tid: b.id, trail: [] });
+        for (let i = 0; i < 7; i++) parts.push({ k: 'smoke', x: sx0 + rnd(-4, 4), y: sy0 - pa.dir * i * 2, vx: rnd(-12, 12), vy: -pa.dir * rnd(10, 34), r: rnd(4, 8), life: 0, max: rnd(1.0, 1.9) }); parts.push({ k: 'flash', x: sx0, y: sy0 - pa.dir * 6, vx: 0, vy: 0, r: 11, life: 0, max: 0.16 });
         if (time - lastBoom > 0.07) { A.audio.cannon(a._side === 'p' ? 1 : 0.7); lastBoom = time; }
       } else if (ev.kind === 'board') {
-        const tp = pos[ev.target]; if (tp) floats.push({ x: tp.x, y: tp.y - tp.hl * 0.2, txt: ev.ok ? t('combat.boarded') : t('combat.lostCrew', { n: ev.lost }), col: ev.ok ? '#2f6b3a' : '#a02a1a', t: 0, big: true });
+        const tp = pos[ev.target]; if (tp) floats.push({ x: tp.x, y: tp.y - tp.bw * 1.6, txt: ev.ok ? t('combat.boarded') : t('combat.lostCrew', { n: ev.lost }), col: ev.ok ? '#2f6b3a' : '#a02a1a', t: 0, big: true });
         shake = 8; A.audio.hit();
       } else if (ev.kind === 'flee') {
-        floats.push({ x: w * 0.27, y: hh * 0.3, txt: ev.ok ? t('combat.escaped') : t('combat.escapeFailed'), col: ev.ok ? '#2f6b3a' : '#a02a1a', t: 0, big: true });
+        floats.push({ x: w * 0.5, y: hh * 0.5, txt: ev.ok ? t('combat.escaped') : t('combat.escapeFailed'), col: ev.ok ? '#2f6b3a' : '#a02a1a', t: 0, big: true });
       }
     }
   }
@@ -69,8 +72,8 @@
       floats.push({ x: p.tx, y: p.ty - 6, txt: '-' + Math.max(1, Math.round(p.ev.dmg || 1)), col: tgt._side === 'p' ? '#a02a1a' : '#fff3d0', t: 0 });
       if (tgt._side === 'p') shake = Math.max(shake, 5);
       A.audio.hit();
-      if (p.ev.cannonLost) floats.push({ x: pp.x, y: pp.y - pp.hl * 0.6, txt: t('combat.cannonLost'), col: '#a02a1a', t: 0 });
-      if (p.ev.sunk) { v.sinking = true; floats.push({ x: pp.x, y: pp.y - pp.hl * 0.3, txt: t('combat.sunk'), col: '#a02a1a', t: 0, big: true }); say(t('combat.sunkLog', { n: tgt.name })); for (let i = 0; i < 14; i++) parts.push({ k: 'bubble', x: pp.x + rnd(-pp.bw, pp.bw), y: pp.y + rnd(-pp.hl, pp.hl), vx: rnd(-8, 8), vy: rnd(-30, -10), r: rnd(2, 5), life: 0, max: rnd(0.8, 1.6) }); }
+      if (p.ev.cannonLost) floats.push({ x: pp.x, y: pp.y - pp.bw * 1.6, txt: t('combat.cannonLost'), col: '#a02a1a', t: 0 });
+      if (p.ev.sunk) { v.sinking = true; floats.push({ x: pp.x, y: pp.y - pp.bw * 2, txt: t('combat.sunk'), col: '#a02a1a', t: 0, big: true }); say(t('combat.sunkLog', { n: tgt.name })); for (let i = 0; i < 14; i++) parts.push({ k: 'bubble', x: pp.x + rnd(-pp.hl, pp.hl), y: pp.y + rnd(-pp.bw, pp.bw), vx: rnd(-8, 8), vy: rnd(-30, -10), r: rnd(2, 5), life: 0, max: rnd(0.8, 1.6) }); }
     } else {
       for (let i = 0; i < 8; i++) parts.push({ k: 'drop', x: p.tx, y: p.ty, vx: rnd(-25, 25), vy: rnd(-70, -30), r: rnd(1, 2.2), life: 0, max: rnd(0.4, 0.7) });
       A.audio.splash();
@@ -108,12 +111,12 @@
     const S = R.S(); const ws = S ? S.wind.str : 1;
     ctx.fillStyle = 'rgba(255,255,255,0.05)'; for (let i = 0; i < 6; i++) { const y = ((time * 14 + i * hh / 6) % (hh + 80)) - 40; ctx.beginPath(); for (let x = 0; x <= w; x += 12) { const yy = y + Math.sin(x * 0.03 + i) * 10; x ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy); } for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, y + 28 + Math.sin(x * 0.03 + i + 1) * 10); ctx.closePath(); ctx.fill(); }
     ctx.strokeStyle = 'rgba(255,255,255,0.32)'; ctx.lineWidth = 1.2; ctx.lineCap = 'round';
-    for (let r = 0; r < 26; r++) { const bx = (r * 97.3) % w, by = ((r * 61.7 + time * (22 + ws * 6)) % (hh + 40)) - 20, L = 14 + (r % 4) * 6; ctx.beginPath(); ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx + 4, by + L * 0.5, bx - 1, by + L); ctx.stroke(); }
+    for (let r = 0; r < 26; r++) { const by = (r * 61.7) % hh, bx = ((r * 97.3 - time * (22 + ws * 6)) % (w + 40) + w + 40) % (w + 40) - 20, L = 14 + (r % 4) * 6; ctx.beginPath(); ctx.moveTo(bx, by); ctx.quadraticCurveTo(bx + L * 0.5, by + 4, bx + L, by - 1); ctx.stroke(); }
     const all = c.p.concat(c.e).slice().sort((a, b) => pos[a.id].y - pos[b.id].y);
     all.forEach((s) => {
       const p = pos[s.id], v = vis[s.id]; if (v.sink >= 1) return;
-      A.drawShipTop(ctx, p.x, p.y, p.hl, s.type, { side: s._side, time, phase: v.phase, sink: v.sink, hullPct: v.hull / A.SHIPS[s.type].hull, cannons: s.cannons });
-      if (v.flash > 0) { ctx.globalAlpha = v.flash * 0.4; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(p.x, p.y, p.bw * 1.1, p.hl, 0, 0, 6.3); ctx.fill(); ctx.globalAlpha = 1; }
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.dir * Math.PI / 2); A.drawShipTop(ctx, 0, 0, p.hl, s.type, { side: s._side, time, phase: v.phase, sink: v.sink, hullPct: v.hull / A.SHIPS[s.type].hull, cannons: s.cannons }); ctx.restore();
+      if (v.flash > 0) { ctx.globalAlpha = v.flash * 0.4; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(p.x, p.y, p.hl, p.bw * 1.1, 0, 0, 6.3); ctx.fill(); ctx.globalAlpha = 1; }
       if (!v.sinking) bars(s, p, v);
     });
     parts.forEach((q) => {
@@ -137,7 +140,7 @@
     ctx.restore();
   }
   function bars(s, p, v) {
-    const T = A.SHIPS[s.type]; const bw = Math.max(54, p.bw * 2.6); const x = p.x - bw / 2, y = p.y + p.hl * 1.12 + 4;
+    const T = A.SHIPS[s.type]; const bw = Math.max(54, Math.min(p.hl * 1.6, 90)); const x = p.x - bw / 2, y = p.y + p.bw * 1.5 + 6;
     ctx.fillStyle = 'rgba(30,20,10,0.55)'; ctx.fillRect(x - 1, y - 1, bw + 2, 7);
     const pct = Math.max(0, v.hull / T.hull); ctx.fillStyle = pct > 0.5 ? '#5aa65a' : pct > 0.25 ? '#d6a53a' : '#c0432a'; ctx.fillRect(x, y, bw * pct, 5);
     const n = s._cd ? s._cd.length : 0; const cw = Math.min(5, (bw - 2) / Math.max(1, n) - 1);

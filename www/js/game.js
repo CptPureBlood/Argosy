@@ -367,8 +367,8 @@
       Object.keys(lost).forEach((g) => { res.lostCargo[g] = lost[g]; });
       S.morale = clamp(S.morale - 8, 0, 100);
     } else if (c.over === 'lose') {
-      Object.keys(S.cargo).forEach((g) => { const keep = Math.floor(S.cargo[g] * 0.6); res.lostCargo[g] = S.cargo[g] - keep; if (keep > 0) S.cargo[g] = keep; else delete S.cargo[g]; });
-      S.gold = Math.floor(S.gold * 0.8);
+      Object.keys(S.cargo).forEach((g) => { const keep = Math.floor(S.cargo[g] * 0.4); res.lostCargo[g] = S.cargo[g] - keep; if (keep > 0) S.cargo[g] = keep; else delete S.cargo[g]; });
+      S.gold = Math.floor(S.gold * 0.2);
       S.ships = [R.mkShip('felucca', { hull: 12, crew: 4, cannons: 0 })];
       S.morale = 40; S.stats.losses++;
     }
