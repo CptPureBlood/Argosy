@@ -147,8 +147,9 @@
 
 /* Sample engine: real recordings (ogg) override the synthesized sounds once decoded; the synths stay as fallback. */
 (function (G) {
-  const A = G.A, AU = A.audio; const buf = (AU.buf = {}); const synth = { cannon: AU.cannon, hit: AU.hit, splash: AU.splash, gull: AU.gull, gullsStart: AU.gullsStart, gullsStop: AU.gullsStop };
-  const MAN = ['cannon_1', 'cannon_2', 'cannon_far', 'hit_1', 'hit_2', 'hit_rumble', 'battle_sting', 'battle_tail', 'splash_big_1', 'splash_big_2', 'sink', 'quill', 'quill_1', 'quill_2', 'quill_3', 'quill_4', 'amb_sea', 'amb_harbor', 'gull_1', 'gull_2', 'gull_3', 'gull_4'];
+  const A = G.A, AU = A.audio; const buf = (AU.buf = {}); const synth = { coin: AU.coin, gong: AU.gong, cannon: AU.cannon, hit: AU.hit, splash: AU.splash, gull: AU.gull, gullsStart: AU.gullsStart, gullsStop: AU.gullsStop };
+  const MAN = ['cannon_1', 'cannon_2', 'cannon_far', 'hit_1', 'hit_2', 'hit_rumble', 'battle_sting', 'battle_tail', 'splash_big_1', 'splash_big_2', 'sink', 'quill', 'quill_1', 'quill_2', 'quill_3', 'quill_4', 'amb_sea', 'amb_harbor', 'gull_1', 'gull_2', 'gull_3', 'gull_4', 'bell_1', 'bell_2', 'bell_ship'];
+  for (let i = 1; i <= 12; i++) MAN.push('coin_' + i);
   for (let i = 1; i <= 12; i++) MAN.push('splash_' + i); for (let i = 1; i <= 30; i++) MAN.push('voice_' + i);
   let loading = false;
   const rnd = (a, b) => a + Math.random() * (b - a); const pick = (pre, n) => buf[pre + (1 + Math.floor(Math.random() * n))];
@@ -178,6 +179,9 @@
   };
   AU.splash = function () { const b = Math.random() < 0.18 ? pick('splash_big_', 2) : pick('splash_', 12); if (!b) return synth.splash(); AU.play(b, { vol: rnd(0.45, 0.7), rate: rnd(0.9, 1.15), pan: rnd(-0.4, 0.4) }); };
   AU.sink = function () { AU.play(buf.sink, { vol: 0.7 }); AU.hit(true); };
+  AU.coin = function () { const b = pick('coin_', 12); if (!b) return synth.coin(); AU.play(b, { vol: rnd(0.5, 0.7), rate: rnd(0.95, 1.08) }); };
+  AU.gong = function () { if (!buf.bell_ship) return synth.gong(); AU.play(buf.bell_ship, { vol: 0.7 }); };
+  AU.alarm = function () { if (!buf.bell_2) return; [0, 0.38, 0.76].forEach((d, i) => AU.play(buf.bell_2, { vol: 0.5, rate: 1.12, delay: d })); };
   AU.quill = function () { AU.play(buf.quill, { vol: 0.8, rate: rnd(0.95, 1.05) }); };
   AU.battleStart = function () { AU.play(buf.battle_sting, { vol: 0.55 }); };
   AU.gull = function () { const b = pick('gull_', 4); if (!b) return synth.gull(); AU.play(b, { vol: rnd(0.25, 0.5), rate: rnd(0.9, 1.15), pan: rnd(-0.6, 0.6) }); };

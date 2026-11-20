@@ -227,7 +227,7 @@
   }
 
   function showEncounter(zone) {
-    const s = S(); const pirates = R.genPirates(zone); const threat = R.threat(pirates);
+    const s = S(); A.audio.alarm && A.audio.alarm(); const pirates = R.genPirates(zone); const threat = R.threat(pirates);
     voy.busy = true;
     const list = h('div', { class: 'enc' }, pirates.map((e) => h('div', { class: 'ecard' }, A.shipThumb(e.type, 74, 42, 'e'), h('div', {}, h('b', {}, e.name), h('div', { class: 'sub' }, A.name(A.SHIPS[e.type])), h('div', { class: 'stats' }, stat('cannon', e.cannons), stat('crew', e.crew))))));
     const fc = Math.round(R.fleeChance(R.newCombat(pirates)) * 100);
