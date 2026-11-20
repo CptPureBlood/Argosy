@@ -188,11 +188,20 @@
     const im = img('ship_' + type + st);
     if (!im.complete || !im.naturalWidth) return vec(ctx, x, y, u, type, o);
     const dir = o.dir || 1; const time = o.time || 0; const ph = o.phase || 0;
-    const w = u * (T.len || 3) * 1.7; const hgt = w * im.naturalHeight / im.naturalWidth;
+    const w = o.px ? im.naturalWidth * o.px : u * (T.len || 3) * 1.7; const hgt = w * im.naturalHeight / im.naturalWidth;
     const bob = Math.sin(time * 1.6 + ph) * u * 0.05;
     ctx.save(); ctx.imageSmoothingEnabled = false;
     ctx.translate(x, y + bob + sink * u * 0.9); ctx.rotate(dir * (Math.sin(time * 1.1 + ph) * 0.03 + sink * 0.35)); ctx.scale(dir, 1);
-    ctx.drawImage(im, -w / 2, -hgt * 0.82, w, hgt);
+    const sx = (o.shakeX || 0);
+    const amp = (o.wave != null ? o.wave : 1) * w * 0.012 * (1 + (A.windStr || 1) * 0.35); const rows = Math.max(24, Math.round(hgt / 3)); const rh = im.naturalHeight / rows; const dh = hgt / rows;
+    if (amp > 0.05) {
+      for (let r = 0; r < rows; r++) {
+        const fr = r / rows; const up = Math.max(0, 0.62 - fr) / 0.62; // only upper (sail/mast) part moves
+        const dx = Math.sin(time * 2.4 + r * 0.22 + ph) * amp * up + Math.sin(time * 5.1 + r * 0.5 + ph) * amp * 0.25 * up;
+        ctx.drawImage(im, 0, r * rh, im.naturalWidth, rh + 0.6, -w / 2 + dx + sx, -hgt * 0.82 + r * dh, w, dh + 0.6);
+      }
+    } else ctx.drawImage(im, -w / 2 + sx, -hgt * 0.82, w, hgt);
+    A.lastShipBox = { w, hgt };
     ctx.restore();
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
