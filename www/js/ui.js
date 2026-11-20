@@ -186,7 +186,7 @@
   function depart(id) {
     const r = R.startVoyage(id, { insure: U.insure });
     if (!r.ok) { A.toast(t(r.err === 'gold' ? 'err.gold' : 'err.generic')); return; }
-    A.audio.gullsStop(); U.insure = false; U.sel = null; A.map.sel = null; A.map.preview = null;
+    A.audio.gullsStop(); A.audio.seaStart(); U.insure = false; U.sel = null; A.map.sel = null; A.map.preview = null;
     const s = S(); A.map.setShipDocked(s.voyage.from); A.map.follow = true; A.map.tk = 16;
     voy.paused = false; voy.busy = false; U.renderTop(); renderSheet(); setTimeout(voyTick, 500);
   }
@@ -375,7 +375,7 @@
     if (p) {
       const lim = R.loanLimit(p.id), rate = R.loanRate(p.id);
       loan = h('div', { class: 'card' }, h('div', { class: 'sub' }, t('loan.info', { lim: A.fmt(lim), r: (rate * 100).toFixed(2) })),
-        h('div', { class: 'acts' }, [500, 1000, 2000].map((n) => h('button', { class: 'btn sm', disabled: lim < n, onClick: () => { if (R.takeLoan(n)) { A.audio.coin(); U.floatGold('+' + A.fmt(n), 'pos'); } rerender(); } }, '+' + A.fmt(n))), h('button', { class: 'btn sm', disabled: lim < 100, onClick: () => { const n = R.takeLoan(lim); if (n) { A.audio.coin(); U.floatGold('+' + A.fmt(n), 'pos'); } rerender(); } }, t('loan.max'))));
+        h('div', { class: 'acts' }, [500, 1000, 2000].map((n) => h('button', { class: 'btn sm', disabled: lim < n, onClick: () => { if (R.takeLoan(n)) { A.audio.quill && A.audio.quill(); A.audio.coin(); U.floatGold('+' + A.fmt(n), 'pos'); } rerender(); } }, '+' + A.fmt(n))), h('button', { class: 'btn sm', disabled: lim < 100, onClick: () => { const n = R.takeLoan(lim); if (n) { A.audio.coin(); U.floatGold('+' + A.fmt(n), 'pos'); } rerender(); } }, t('loan.max'))));
     }
     const loans = s.loans.length ? [h('h3', {}, t('loan.yours')), s.loans.map((l) => {
       const dl = l.due - s.day;
@@ -409,7 +409,7 @@
     $('splash')?.remove();
     const el = h('div', { id: 'splash', class: 'splash' }, h('div', { class: 'sbox' }, h('div', { class: 'logo', html: A.svg(A.ICONS.ship, 56) }), h('h1', {}, 'ARGOSY'), h('p', { class: 'tag' }, t('splash.tag')), langs,
       has ? h('button', { class: 'btn go big', onClick: () => start(true) }, t('splash.continue')) : null,
-      h('button', { class: 'btn big' + (has ? ' ghost' : ' go'), onClick: () => { A.audio.unlock(); U.profileModal((pf) => { if (has) R.reset(); R.newGame(pf); start(false, true); }); } }, t('splash.new'))));
+      h('button', { class: 'btn big' + (has ? ' ghost' : ' go'), onClick: () => { A.audio.unlock(); U.profileModal((pf) => { if (has) R.reset(); R.newGame(pf); A.audio.quill && A.audio.quill(); start(false, true); }); } }, t('splash.new'))));
     document.body.append(el);
   };
   function start(load, fresh) {

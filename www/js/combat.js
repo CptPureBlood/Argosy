@@ -10,7 +10,7 @@
     time = 0; projs = []; parts = []; floats = []; vis = {}; pos = {}; shake = 0; speed = 1; overT = 0; finished = false; lastBoom = 0;
     c.p.concat(c.e).forEach((s) => { vis[s.id] = { hull: s.hull, max: s.hull, sink: 0, sinking: false, flash: 0, phase: Math.random() * 6 }; });
     if (opts.enemyVolley) c.e.forEach((s) => s._cd.forEach((_, i) => { s._cd[i] = Math.min(s._cd[i], 0.2 + i * 0.15); }));
-    A.audio.gullsStop();
+    A.audio.gullsStop(); A.audio.battleStart && A.audio.battleStart();
     cv = h('canvas', { class: 'combatcv' });
     ui = {};
     ui.title = h('div', { class: 'ctitle' }, t('combat.vs', { n: c.e.length }));
@@ -74,9 +74,9 @@
       parts.push({ k: 'spr', f: ['fx_splinters'], x: p.tx, y: p.ty, vx: rnd(-20, 20), vy: -rnd(20, 40), sz: pp.wd * 0.16, life: 0, max: 0.7 });
       floats.push({ x: p.tx, y: p.ty - 6, txt: '-' + Math.max(1, Math.round(p.ev.dmg || 1)), col: tgt._side === 'p' ? '#a02a1a' : '#fff3d0', t: 0 });
       if (tgt._side === 'p') shake = Math.max(shake, 5);
-      A.audio.hit();
+      A.audio.hit(p.ev.sunk);
       if (p.ev.cannonLost) floats.push({ x: pp.x, y: pp.y - pp.bw * 1.6, txt: t('combat.cannonLost'), col: '#a02a1a', t: 0 });
-      if (p.ev.sunk) { v.sinking = true; floats.push({ x: pp.x, y: pp.y - pp.bw * 2, txt: t('combat.sunk'), col: '#a02a1a', t: 0, big: true }); say(t('combat.sunkLog', { n: tgt.name })); for (let i = 0; i < 14; i++) parts.push({ k: 'bubble', x: pp.x + rnd(-pp.hl, pp.hl), y: pp.y + rnd(-pp.bw, pp.bw), vx: rnd(-8, 8), vy: rnd(-30, -10), r: rnd(2, 5), life: 0, max: rnd(0.8, 1.6) }); }
+      if (p.ev.sunk) { A.audio.sink(); v.sinking = true; floats.push({ x: pp.x, y: pp.y - pp.bw * 2, txt: t('combat.sunk'), col: '#a02a1a', t: 0, big: true }); say(t('combat.sunkLog', { n: tgt.name })); for (let i = 0; i < 14; i++) parts.push({ k: 'bubble', x: pp.x + rnd(-pp.hl, pp.hl), y: pp.y + rnd(-pp.bw, pp.bw), vx: rnd(-8, 8), vy: rnd(-30, -10), r: rnd(2, 5), life: 0, max: rnd(0.8, 1.6) }); }
     } else {
       parts.push({ k: 'spr', f: ['fx_splash1', 'fx_splash2', 'fx_splash3'], x: p.tx, y: p.ty - 6, sz: pp.wd * 0.24, life: 0, max: 0.6 }); parts.push({ k: 'spr', f: ['fx_ripple'], x: p.tx, y: p.ty + 2, sz: pp.wd * 0.3, life: 0, max: 1.1 });
       A.audio.splash();

@@ -144,3 +144,75 @@
     setTimeout(() => { try { V.out.disconnect(); } catch (e) {} }, 900);
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
+
+/* Sample engine: real recordings (ogg) override the synthesized sounds once decoded; the synths stay as fallback. */
+(function (G) {
+  const A = G.A, AU = A.audio; const buf = (AU.buf = {}); const synth = { cannon: AU.cannon, hit: AU.hit, splash: AU.splash, gull: AU.gull, gullsStart: AU.gullsStart, gullsStop: AU.gullsStop };
+  const MAN = ['cannon_1', 'cannon_2', 'cannon_far', 'hit_1', 'hit_2', 'hit_rumble', 'battle_sting', 'battle_tail', 'splash_big_1', 'splash_big_2', 'sink', 'quill', 'quill_1', 'quill_2', 'quill_3', 'quill_4', 'amb_sea', 'amb_harbor', 'gull_1', 'gull_2', 'gull_3', 'gull_4'];
+  for (let i = 1; i <= 12; i++) MAN.push('splash_' + i); for (let i = 1; i <= 30; i++) MAN.push('voice_' + i);
+  let loading = false;
+  const rnd = (a, b) => a + Math.random() * (b - a); const pick = (pre, n) => buf[pre + (1 + Math.floor(Math.random() * n))];
+  const nVoice = () => { let n = 0; while (buf['voice_' + (n + 1)]) n++; return n; };
+  function loadAll() {
+    if (loading || !AU.ctx) return; loading = true;
+    MAN.forEach((n) => { const x = new XMLHttpRequest(); x.open('GET', 'audio/' + n + '.ogg'); x.responseType = 'arraybuffer';
+      x.onload = () => { if (!x.response || !x.response.byteLength) return; try { AU.ctx.decodeAudioData(x.response, (b) => { buf[n] = b; }, () => {}); } catch (e) {} };
+      x.onerror = () => {}; x.send(); });
+  }
+  const unlock0 = AU.unlock; AU.unlock = function () { unlock0(); loadAll(); };
+  const ok = () => AU.on && AU.ctx && AU.ctx.state === 'running';
+  AU.play = function (b, o) {
+    if (!ok() || !b) return null; o = o || {}; const c = AU.ctx; const s = c.createBufferSource(); s.buffer = b; s.playbackRate.value = o.rate || 1;
+    const g = c.createGain(); g.gain.value = o.vol == null ? 1 : o.vol; let last = s; 
+    if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; last.connect(f); last = f; }
+    if (o.pan && c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = o.pan; last.connect(p); last = p; }
+    last.connect(g); g.connect(o.dest || AU.master); s.start(c.currentTime + (o.delay || 0)); return { s, g };
+  };
+  AU.cannon = function (vol) {
+    const v = vol == null ? 1 : vol; const far = v < 0.95; const b = far && buf.cannon_far && Math.random() < 0.55 ? buf.cannon_far : (Math.random() < 0.5 ? buf.cannon_1 : buf.cannon_2);
+    if (!b) return synth.cannon(vol); AU.play(b, { vol: far ? 0.55 : 0.8, rate: rnd(0.92, 1.08), pan: rnd(-0.3, 0.3), lp: far ? 3500 : 0 });
+  };
+  AU.hit = function (big) {
+    const b = big ? buf.hit_1 : (Math.random() < 0.8 ? buf.hit_2 : buf.hit_1); if (!b) return synth.hit();
+    AU.play(b, { vol: 0.8, rate: rnd(0.9, 1.12), pan: rnd(-0.3, 0.3) }); if (big && buf.hit_rumble) AU.play(buf.hit_rumble, { vol: 0.5, delay: 0.1 });
+  };
+  AU.splash = function () { const b = Math.random() < 0.18 ? pick('splash_big_', 2) : pick('splash_', 12); if (!b) return synth.splash(); AU.play(b, { vol: rnd(0.45, 0.7), rate: rnd(0.9, 1.15), pan: rnd(-0.4, 0.4) }); };
+  AU.sink = function () { AU.play(buf.sink, { vol: 0.7 }); AU.hit(true); };
+  AU.quill = function () { AU.play(buf.quill, { vol: 0.8, rate: rnd(0.95, 1.05) }); };
+  AU.battleStart = function () { AU.play(buf.battle_sting, { vol: 0.55 }); };
+  AU.gull = function () { const b = pick('gull_', 4); if (!b) return synth.gull(); AU.play(b, { vol: rnd(0.25, 0.5), rate: rnd(0.9, 1.15), pan: rnd(-0.6, 0.6) }); };
+  // looped ambience with fades
+  const amb = {};
+  function ambOn(name, vol) {
+    if (!ok() || !buf[name]) return false; if (amb[name]) { amb[name].g.gain.cancelScheduledValues(0); amb[name].g.gain.linearRampToValueAtTime(vol, AU.ctx.currentTime + 1.5); return true; }
+    const c = AU.ctx; const s = c.createBufferSource(); s.buffer = buf[name]; s.loop = true; const g = c.createGain(); g.gain.value = 0; s.connect(g); g.connect(AU.master); s.start(); g.gain.linearRampToValueAtTime(vol, c.currentTime + 2); amb[name] = { s, g }; return true;
+  }
+  function ambOff(name) { const a = amb[name]; if (!a) return; delete amb[name]; const c = AU.ctx; try { a.g.gain.cancelScheduledValues(c.currentTime); a.g.gain.setValueAtTime(a.g.gain.value, c.currentTime); a.g.gain.linearRampToValueAtTime(0, c.currentTime + 1.2); a.s.stop(c.currentTime + 1.3); } catch (e) {} }
+  AU.seaStart = function () { ambOff('amb_harbor'); ambOn('amb_sea', 0.55); };
+  AU.seaStop = function () { ambOff('amb_sea'); };
+  AU.gullsStart = function () {
+    AU.seaStop(); if (ambOn('amb_harbor', 0.5)) { AU.gullOn = true; if (!AU.gullTimer) { const loop = () => { if (!AU.gullOn) { AU.gullTimer = null; return; } AU.gull(); AU.gullTimer = setTimeout(loop, rnd(5000, 14000)); }; AU.gullTimer = setTimeout(loop, rnd(2000, 5000)); } return; }
+    synth.gullsStart();
+  };
+  AU.gullsStop = function () { ambOff('amb_harbor'); synth.gullsStop(); };
+  // ---- sample-based NPC chatter: 5 voices from thin to deep, built from the cut mumble syllables
+  const VP = [{ rate: 1.38, lp: 5200, vol: 0.9 }, { rate: 1.16, lp: 4200, vol: 0.95 }, { rate: 1.0, lp: 3600, vol: 1 }, { rate: 0.83, lp: 2800, vol: 1.05 }, { rate: 0.68, lp: 2200, vol: 1.1 }];
+  const synthVoiceStart = AU.voiceStart, synthVoiceStop = AU.voiceStop; let chat = null;
+  AU.voiceStart = function (idx) {
+    const n = nVoice(); if (!ok() || n < 6) return synthVoiceStart(idx); AU.voiceStop(true); const P = VP[((idx % 5) + 5) % 5]; const V = { on: true, t: null, nodes: [] }; chat = V;
+    let prev = 0;
+    const next = () => {
+      if (!V.on) return; let k = 1 + Math.floor(Math.random() * n); if (k === prev) k = (k % n) + 1; prev = k; const b = buf['voice_' + k]; const r = P.rate * rnd(0.93, 1.07);
+      const pl = AU.play(b, { vol: 0.5 * P.vol, rate: r, lp: P.lp, pan: 0 }); if (pl) V.nodes.push(pl);
+      let dur = b.duration / r;
+      if (Math.random() < 0.22) { const k2 = 1 + Math.floor(Math.random() * n); const b2 = buf['voice_' + k2]; const p2 = AU.play(b2, { vol: 0.22 * P.vol, rate: r * (Math.random() < 0.5 ? 1.5 : 0.75), lp: P.lp, delay: rnd(0.03, 0.12) }); if (p2) V.nodes.push(p2); }
+      V.t = setTimeout(next, Math.max(40, dur * 1000 - 30 + rnd(10, 130)));
+    };
+    next();
+  };
+  AU.voiceStop = function (now) {
+    if (chat) { chat.on = false; clearTimeout(chat.t); const c = AU.ctx; chat.nodes.forEach((p) => { try { p.g.gain.setTargetAtTime(0, c.currentTime, now ? 0.01 : 0.05); p.s.stop(c.currentTime + 0.3); } catch (e) {} }); chat = null; }
+    synthVoiceStop(now);
+  };
+  AU.setOn = (function (old) { return function (v) { old(v); if (!v) { AU.seaStop(); ambOff('amb_harbor'); } }; })(AU.setOn);
+})(typeof globalThis !== 'undefined' ? globalThis : window);
