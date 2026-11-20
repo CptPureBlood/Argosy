@@ -20,7 +20,8 @@
   };
   A.svg = (d, size, cls) => '<svg class="' + (cls || '') + '" viewBox="0 0 24 24" width="' + (size || 18) + '" height="' + (size || 18) + '" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + d + '"/></svg>';
   A.icon = (name, size, cls) => A.h('span', { class: 'ic ' + (cls || ''), html: A.svg(A.ICONS[name] || name, size) });
-  A.goodIcon = (id, size, cls) => A.h('span', { class: 'ic ' + (cls || ''), html: A.goodSvg(id, size) });
+  A.SPR = { oil: 'glass' };
+  A.goodIcon = (id, size, cls) => A.h('span', { class: 'ic ' + (cls || ''), html: '<img class="px" width="' + (size || 18) + '" height="' + (size || 18) + '" src="img/' + (A.SPR[id] || id) + '.png" alt="" onerror="this.outerHTML=A.goodSvg(\'' + id + '\',' + (size || 18) + ')">' });
   A.fmt = (n) => Math.round(n).toLocaleString(A.lang === 'tr' ? 'tr-TR' : 'en-US');
   A.name = (o) => (o.n ? o.n[A.lang] || o.n.en : o.name || '');
 })(typeof globalThis !== 'undefined' ? globalThis : window);

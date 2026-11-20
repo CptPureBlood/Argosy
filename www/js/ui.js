@@ -299,7 +299,8 @@
   }
 
   // ------------------------------------------------------------------ QUESTS
-  const portrait = (look, size) => h('span', { class: 'portrait', html: A.portrait(look, size) });
+  const ptIdx = (k) => { if (typeof k === 'number') return k; const mi = A.MAYORS.findIndex((m) => m.id === k); if (mi >= 0) return mi; let x = 0; for (const ch of String(k)) x = (x * 31 + ch.charCodeAt(0)) >>> 0; return 29 + (x % 16); };
+  const portrait = (k, size) => h('span', { class: 'portrait', html: '<img class="px" width="' + size + '" height="' + size + '" src="img/pt_' + String(ptIdx(k)).padStart(2, '0') + '.png" alt="">' });
   function capLook(name) {
     let x = 0; for (let i = 0; i < name.length; i++) x = (x * 31 + name.charCodeAt(i)) >>> 0;
     const pk = (a, k) => a[(x >>> k) % a.length];
@@ -308,7 +309,7 @@
   const rarName = (r) => t('rar.' + r);
   function captainRow(c, hire) {
     const pk = A.PERK_BY_ID[c.perk]; const s = S();
-    return h('div', { class: 'card captain rar-' + c.rar }, portrait(capLook(c.name), 52),
+    return h('div', { class: 'card captain rar-' + c.rar }, portrait(c.name, 52),
       h('div', { class: 'info' }, h('b', {}, c.name), h('span', { class: 'perk' }, h('i', { class: 'rar rar-' + c.rar }, rarName(c.rar)), ' ' + A.name(pk)), h('span', { class: 'sub' }, pk.d[A.lang] || pk.d.en),
         h('span', { class: 'sub' }, hire ? t('tavern.cost', { f: A.fmt(c.fee), w: c.wage }) : t('tavern.wage', { w: c.wage }))),
       hire ? h('button', { class: 'btn sm', disabled: s.gold < c.fee || s.captains.length >= R.captainSlots(), onClick: () => { if (R.hireCaptain(c.id)) { A.audio.coin(); A.toast(t('tavern.hired', { n: c.name })); } rerender(); } }, t('tavern.hire'))
@@ -352,7 +353,7 @@
     const line = addr(first ? (m.say[A.lang] || m.say.en) : t('mayor.back'));
     const stopVoice = () => A.audio.voiceStop();
     U.modal({ title: '', cls: 'mayor', body: h('div', { class: 'mayorbox' },
-      h('div', { class: 'mtop' }, portrait(m.look, 88), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, m.title[A.lang] || m.title.en))),
+      h('div', { class: 'mtop' }, portrait(m.id, 88), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, m.title[A.lang] || m.title.en))),
       bubble, news.length ? [h('div', { class: 'lbl' }, t('mayor.news')), news] : null),
       buttons: [{ label: t('mayor.visit'), kind: 'go', onClick: () => { stopVoice(); U.go('quests'); } }, { label: t('mayor.ok'), kind: 'ghost', onClick: stopVoice }] });
     U.typeText(bubble, line, voiceOf(portId));
@@ -366,7 +367,7 @@
         active ? h('div', { class: 'qbar' }, bar((have / q.qty) * 100), h('span', {}, have + '/' + q.qty), h('button', { class: 'btn sm', disabled: !R.canComplete(q), onClick: () => { if (R.completeQuest(q.id)) { A.audio.coin(); A.toast(t('q.done', { n: A.fmt(q.reward) })); } rerender(); } }, t('q.deliver')))
           : h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.quests.length >= 3, onClick: () => { R.acceptQuest(q.id); rerender(); } }, t('q.accept'))));
     };
-    const head = m ? h('div', { class: 'card mayorcard' }, portrait(m.look, 64), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, (m.title[A.lang] || m.title.en) + ' · ' + A.name(p)), h('span', { class: 'sub' }, t('mayor.hello', { n: (s.profile && s.profile.name) || '' })))) : h('p', { class: 'sub' }, t('mayor.atSea'));
+    const head = m ? h('div', { class: 'card mayorcard' }, portrait(m.id, 64), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, (m.title[A.lang] || m.title.en) + ' · ' + A.name(p)), h('span', { class: 'sub' }, t('mayor.hello', { n: (s.profile && s.profile.name) || '' })))) : h('p', { class: 'sub' }, t('mayor.atSea'));
     const evs = p ? R.eventsAt(p.id).map(R.eventText) : [];
     const news = h('div', {}, evs.length ? evs.map((e) => h('div', { class: 'card news' }, h('b', {}, e.title), h('div', { class: 'sub' }, e.text), h('div', { class: 'evg' }, e.goods.slice(0, 6).map((g) => h('span', { class: 'chip ' + (g[1] > 1 ? 'd' : 'p') }, A.goodIcon(g[0], 15), h('b', {}, (g[1] > 1 ? '▲' : '▼') + Math.abs(Math.round((g[1] - 1) * 100)) + '%'))), h('span', { class: 'sub' }, t('mayor.days', { n: e.left }))))) : h('p', { class: 'sub' }, t('mayor.noNews')));
     const offers = p ? R.offers().map((q) => questCard(q, false)) : [];
