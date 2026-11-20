@@ -20,7 +20,10 @@
     ui.boardTxt = h('span'); ui.fleeTxt = h('span');
     ui.board = h('button', { class: 'cbtn board', onClick: () => act('board') }, ui.boardCd, ui.boardTxt);
     ui.flee = h('button', { class: 'cbtn flee', onClick: () => act('flee') }, ui.fleeCd, ui.fleeTxt);
-    root = h('div', { class: 'combat' }, cv, h('div', { class: 'chud' }, ui.title, ui.speed), ui.log, h('div', { class: 'cactions' }, ui.board, ui.flee));
+    ui.fireImg = h('img', { class: 'px', src: 'img/ui_fire_ready.png' }); ui.fireTxt = h('span', { class: 'ftxt' });
+    ui.fire = h('button', { class: 'cfire', 'aria-label': 'fire', onClick: () => { A.audio.unlock(); if (R.manualFire(c)) shake = Math.max(shake, 1.5); } }, ui.fireImg, ui.fireTxt);
+    cv.addEventListener('pointerdown', (e) => { const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; const hit = c.e.filter((s) => !s.sunk).find((s) => { const q = pos[s.id]; return q && Math.abs(x - q.x) < q.wd * 0.6 && y > q.y - q.hg - 10 && y < q.y + 20; }); if (hit) c.target = hit.id; });
+    root = h('div', { class: 'combat' }, cv, h('div', { class: 'chud' }, ui.title, ui.speed), ui.log, h('div', { class: 'cactions' }, ui.board, ui.fire, ui.flee));
     document.getElementById('overlay').append(root);
     ctx = cv.getContext('2d'); resize(); window.addEventListener('resize', resize);
     last = performance.now(); raf = requestAnimationFrame(frame);
@@ -96,10 +99,28 @@
     floats.forEach((f) => { f.t += dt; }); floats = floats.filter((f) => f.t < 1.4);
     Object.keys(vis).forEach((id) => { const v = vis[id]; v.flash = Math.max(0, v.flash - dt * 4); v.shk = Math.max(0, (v.shk || 0) - dt * 3.2); if (v.sinking) v.sink = Math.min(1, v.sink + sdt * 0.45); });
     shake = Math.max(0, shake - dt * 14);
-    draw(); buttons();
+    draw(); drawAim(); buttons();
   }
+  function drawAim() {
+    if (c.over) return; const foes = c.e.filter((s) => !s.sunk); if (!foes.length) return;
+    let t = foes.find((f) => f.id === c.target); if (!t) { t = foes[0]; c.target = t.id; }
+    const pe = pos[t.id], mine = c.p.filter((s) => !s.sunk && s.cannons > 0)[0]; if (!pe || !mine || !pos[mine.id]) return; const pm = pos[mine.id];
+    const ready = !(c.manualCd > 0); const tx = pe.x, ty = pe.y - pe.hg * 0.45, sx = pm.x, sy = pm.y - pm.hg * 0.3;
+    ctx.save(); ctx.imageSmoothingEnabled = false;
+    if (ready) {
+      const mx = (sx + tx) / 2, my = Math.min(sy, ty) - Math.hypot(tx - sx, ty - sy) * 0.18, N = 9, dot = fx0('ui_dot'), dim = fx0('ui_dot_dim');
+      for (let i = 0; i < N; i++) { const f = ((i + time * 1.4) % N) / N, a = (1 - f) * (1 - f), x = a * sx + 2 * f * (1 - f) * mx + f * f * tx, y = a * sy + 2 * f * (1 - f) * my + f * f * ty, im = i % 2 ? dim : dot, sz = 7 + f * 3; if (im.complete && im.naturalWidth) { ctx.globalAlpha = 0.35 + 0.65 * (1 - Math.abs(f - 0.5) * 1.2); ctx.drawImage(im, x - sz / 2, y - sz / 2, sz, sz); } }
+      ctx.globalAlpha = 1;
+    }
+    const am = fx0(ready ? 'ui_aim_lock' : 'ui_aim'), as = Math.max(46, pe.wd * 0.55) * (1 + (ready ? Math.sin(time * 5) * 0.04 : 0));
+    if (am.complete && am.naturalWidth) { ctx.globalAlpha = ready ? 0.95 : 0.6; ctx.drawImage(am, tx - as / 2, ty - as / 2, as, as); }
+    ctx.restore();
+  }
+  const fx0 = (n) => (FXI[n] = FXI[n] || Object.assign(new Image(), { src: 'img/' + n + '.png' }));
+
 
   function buttons() {
+    if (ui.fireImg) { const cd = c.manualCd || 0, want = cd > 0 ? 'ui_fire_wait' : 'ui_fire_ready'; if (ui.fireImg._s !== want) { ui.fireImg._s = want; ui.fireImg.src = 'img/' + want + '.png'; } ui.fireTxt.textContent = cd > 0 ? cd.toFixed(1) : ''; ui.fire.disabled = !!c.over; }
     const bc = R.boardChance(c), fc = R.fleeChance(c);
     ui.boardTxt.textContent = t('combat.board', { p: Math.round(bc * 100) }); ui.fleeTxt.textContent = t('combat.flee', { p: Math.round(fc * 100) });
     ui.boardCd.style.width = (c.boardCd / 15) * 100 + '%'; ui.fleeCd.style.width = (c.fleeCd / 12) * 100 + '%';

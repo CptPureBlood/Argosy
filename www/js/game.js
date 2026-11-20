@@ -305,8 +305,15 @@
     }
     c.events.push(ev);
   }
+  R.manualFire = function (c) {
+    if (c.over || (c.manualCd || 0) > 0) return null;
+    const foes = alive(c.e); if (!foes.length) return null; const t = foes.find((f) => f.id === c.target) || foes[0];
+    const mine = alive(c.p).filter((x) => x.cannons > 0); if (!mine.length) return null;
+    const sh = mine[0]; sh._manual = true; fire(c, sh, [t]); sh._manual = false; c.manualCd = clamp(2.4 * R.cdMod(), 1.2, 4); c.manualMax = c.manualCd; return true;
+  };
   R.stepCombat = function (c, dt) {
     if (c.over) return;
+    c.manualCd = Math.max(0, (c.manualCd || 0) - dt);
     c.t += dt; c.boardCd = Math.max(0, c.boardCd - dt); c.fleeCd = Math.max(0, c.fleeCd - dt);
     [[c.p, c.e], [c.e, c.p]].forEach((pair) => {
       alive(pair[0]).forEach((s) => {
