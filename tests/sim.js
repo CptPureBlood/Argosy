@@ -62,8 +62,8 @@ S.port = 'venice';
 // ---- escort, insurance, voyage
 ok(R.hireEscort('light') && S.escortShip, 'hire escort');
 R.cancelEscort();
-const est = R.estimate('ragusa');
-ok(est.days > 0 && est.nm > 200, 'estimate Ragusa ' + est.days + ' days ' + Math.round(est.nm) + ' nm');
+const est = R.estimate('athens');
+ok(est.days > 0 && est.nm > 200, 'estimate Athens ' + est.days + ' days ' + Math.round(est.nm) + ' nm');
 
 // ---- full simulation with a trading bot (also exercises combat)
 function bot(days) {

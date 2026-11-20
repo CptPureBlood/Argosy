@@ -45,5 +45,12 @@
     }
     ctx.restore();
   }
-  A.drawLandmark = draw;
+  const ALIAS = { tower: 'lighthouse', colossus: 'rhodes' };
+  A.drawLandmark = function (ctx, t, x, y, s) {
+    const im = A.img ? A.img('lm_' + (ALIAS[t] || t)) : null;
+    if (im && im.complete && im.naturalWidth) {
+      const sc = Math.min((s * 2.1) / im.naturalWidth, (s * 1.9) / im.naturalHeight), dw = im.naturalWidth * sc, dh = im.naturalHeight * sc;
+      ctx.save(); ctx.imageSmoothingEnabled = s < 60; ctx.shadowColor = 'rgba(40,25,10,0.45)'; ctx.shadowBlur = 3; ctx.shadowOffsetY = 1; ctx.drawImage(im, x - dw / 2, y - dh, dw, dh); ctx.restore();
+    } else draw(ctx, t, x, y, s);
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

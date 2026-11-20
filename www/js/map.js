@@ -1,7 +1,7 @@
 /* Argosy – animated Mediterranean map (canvas): coast, waves, wind, skull zones, routes, ship. */
 (function (G) {
   const A = G.A, W = A.world, R = A.game, C = A.C;
-  const RAD = Math.PI / 180, YS = 1.27, PAD = 1.6, PADY = 8, MINK = 3.4;
+  const RAD = Math.PI / 180, YS = 1.27, PAD = 0, PADY = 0, CAM_LAT_MIN = -1.2, FAKE_LAT = 10.8, FAKE_LON = 41.5;
   const M = (A.map = { active: false, sel: null, onSelect: null, preview: null, ship: null, vAnim: null, follow: false, trail: [] });
   let cv, ctx, w = 0, h = 0, dpr = 1, time = 0, last = 0;
   const pts = new Map(); let moved = false, pinch = null;
@@ -24,13 +24,16 @@
 
   const proj = (lon, lat) => [w / 2 + (lon - M.cx) * M.k, h / 2 - (lat - M.cy) * M.k * YS];
   M.proj = proj;
+  const minK = () => Math.max(w / (C.LON_MAX - C.LON_MIN), h / (YS * (C.LAT_MAX - CAM_LAT_MIN)));
   function clampCam() {
-    M.tk = Math.max(Math.max(MINK, w / (C.LON_MAX - C.LON_MIN + 2 * PAD)), Math.min(46, M.tk)); M.k = Math.max(MINK, Math.min(46, M.k));
-    [['cx', 'tcx'], ['cy', 'tcy']].forEach(() => {});
+    const mk = minK(); M.tk = Math.max(mk, Math.min(46, M.tk)); M.k = Math.max(mk, Math.min(46, M.k));
     const vw = w / M.k, vh = h / (M.k * YS);
-    const minX = C.LON_MIN - PAD + vw / 2, maxX = C.LON_MAX + PAD - vw / 2, minY = C.LAT_MIN - PADY + vh / 2, maxY = C.LAT_MAX + PADY - vh / 2;
+    const minX = C.LON_MIN + vw / 2, maxX = C.LON_MAX - vw / 2, minY = CAM_LAT_MIN + vh / 2, maxY = C.LAT_MAX - vh / 2;
     M.cx = minX > maxX ? (C.LON_MIN + C.LON_MAX) / 2 : Math.max(minX, Math.min(maxX, M.cx));
-    M.cy = minY > maxY ? (C.LAT_MIN + C.LAT_MAX) / 2 : Math.max(minY, Math.min(maxY, M.cy));
+    M.cy = minY > maxY ? (CAM_LAT_MIN + C.LAT_MAX) / 2 : Math.max(minY, Math.min(maxY, M.cy));
+    // the west of the image below ~11N is not real map: keep it out of view
+    const bot = M.cy - vh / 2, left = M.cx - vw / 2;
+    if (bot < FAKE_LAT && left < FAKE_LON) { const need = h / (YS * (C.LAT_MAX - FAKE_LAT)); if (M.tk < need) M.tk = need; M.cy = Math.min(maxY, Math.max(M.cy, FAKE_LAT + vh / 2)); }
   }
 
   M.init = function (wrap) {
