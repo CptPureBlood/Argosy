@@ -41,11 +41,11 @@
   };
 
   A.SHIPS = {
-    felucca: { n: { en: 'Felucca', tr: 'Feluka' }, cap: 24, speed: 7.0, hull: 50, cannons: 2, crewMin: 5, crewMax: 10, cost: 900, windF: 1.0, masts: 1, len: 0.8 },
-    caravel: { n: { en: 'Caravel', tr: 'Karavel' }, cap: 50, speed: 7.5, hull: 80, cannons: 6, crewMin: 12, crewMax: 22, cost: 3200, windF: 1.0, masts: 2, len: 0.95 },
-    galley: { n: { en: 'Galley', tr: 'Kadırga' }, cap: 40, speed: 8.0, hull: 90, cannons: 10, crewMin: 30, crewMax: 50, cost: 4800, windF: 0.4, masts: 1, len: 1.15, oars: true },
-    carrack: { n: { en: 'Carrack', tr: 'Nao' }, cap: 130, speed: 5.5, hull: 140, cannons: 14, crewMin: 28, crewMax: 45, cost: 8500, windF: 1.15, masts: 3, len: 1.1 },
-    galleon: { n: { en: 'Galleon', tr: 'Galyon' }, cap: 95, speed: 6.5, hull: 180, cannons: 22, crewMin: 45, crewMax: 80, cost: 15500, windF: 1.1, masts: 3, len: 1.3 },
+    felucca: { n: { en: 'Felucca', tr: 'Feluka' }, cap: 24, speed: 7.0, hull: 50, cannons: 2, crewMin: 5, crewMax: 10, cost: 2250, windF: 1.0, masts: 1, len: 0.8 },
+    caravel: { n: { en: 'Caravel', tr: 'Karavel' }, cap: 50, speed: 7.5, hull: 80, cannons: 6, crewMin: 12, crewMax: 22, cost: 8000, windF: 1.0, masts: 2, len: 0.95 },
+    galley: { n: { en: 'Galley', tr: 'Kadırga' }, cap: 40, speed: 8.0, hull: 90, cannons: 10, crewMin: 30, crewMax: 50, cost: 12000, windF: 0.4, masts: 1, len: 1.15, oars: true },
+    carrack: { n: { en: 'Carrack', tr: 'Nao' }, cap: 130, speed: 5.5, hull: 140, cannons: 14, crewMin: 28, crewMax: 45, cost: 21250, windF: 1.15, masts: 3, len: 1.1 },
+    galleon: { n: { en: 'Galleon', tr: 'Galyon' }, cap: 95, speed: 6.5, hull: 180, cannons: 22, crewMin: 45, crewMax: 80, cost: 38750, windF: 1.1, masts: 3, len: 1.3 },
   };
   A.SHIP_ORDER = ['felucca', 'caravel', 'galley', 'carrack', 'galleon'];
 
@@ -58,7 +58,7 @@
   A.PIRATE_NAMES = ['Black Gull', 'Red Corsair', 'Sea Wolf', 'Barbary Rose', 'Night Heron', 'Sable Fox', 'Iron Tide', 'Crimson Crab'];
 
   A.C = {
-    MAX_FLEET: 5, START_GOLD: 1200, NM_PER_KNOT_DAY: 19.2, SAVE_KEY: 'argosy_save_v2', LANG_KEY: 'argosy_lang',
+    MAX_FLEET: 6, START_GOLD: 2000, NM_PER_KNOT_DAY: 19.2, SAVE_KEY: 'argosy_save_v2', LANG_KEY: 'argosy_lang',
     UPKEEP_PER_CREW: 0.35, REPAIR_PER_HULL: 2.2, CREW_COST: 20, CANNON_COST: 140, INSURE_RATE: 0.04, INSURE_PAYOUT: 0.75,
     LON_MIN: -10, LON_MAX: 125, LAT_MIN: -9.5, LAT_MAX: 47.5, GRID: 0.25,
   };

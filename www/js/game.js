@@ -32,9 +32,17 @@
       exp: o.exp != null ? o.exp : 2, cannons: o.cannons != null ? o.cannons : Math.floor(t.cannons * 0.3),
     };
   };
-  R.shipSpeed = (s) => T(s.type).speed * (0.7 + 0.3 * (s.hull / T(s.type).hull)) * R.speedMod();
+  // ---- per-ship upgrades (levels 0-3): hull, sail, hold, gun, crew
+  const UPM = { hull: [0, 0.15, 0.3, 0.5], sail: [0, 0.06, 0.12, 0.2], hold: [0, 0.12, 0.25, 0.4], gun: [0, 0.04, 0.08, 0.12], crew: [0, 0.15, 0.3, 0.45] };
+  R.UP_KEYS = ['hull', 'sail', 'hold', 'gun', 'crew']; R.UPM = UPM;
+  R.upLv = (s, k) => (s.up && s.up[k]) || 0;
+  R.upM = (s, k) => UPM[k][R.upLv(s, k)];
+  R.maxHull = (s) => Math.round(T(s.type).hull * (1 + R.upM(s, 'hull')));
+  R.crewMaxOf = (s) => Math.round(T(s.type).crewMax * (1 + R.upM(s, 'crew')));
+  R.capOf = (s) => Math.round(T(s.type).cap * (1 + R.upM(s, 'hold')));
+  R.shipSpeed = (s) => T(s.type).speed * (1 + R.upM(s, 'sail')) * (0.7 + 0.3 * (s.hull / R.maxHull(s))) * R.speedMod();
   R.fleetSpeed = () => (S.ships.length ? Math.min.apply(null, S.ships.map(R.shipSpeed)) : 0);
-  R.fleetCap = () => Math.floor(S.ships.reduce((a, s) => a + T(s.type).cap, 0) * R.capMod());
+  R.fleetCap = () => Math.floor(S.ships.reduce((a, s) => a + R.capOf(s), 0) * R.capMod());
   R.cargoCount = () => Object.values(S.cargo).reduce((a, b) => a + b, 0);
   R.power = (s) => s.cannons * 3 + s.hull / 12 + s.crew / 6;
   R.fleetPower = () => S.ships.reduce((a, s) => a + R.power(s), 0);
@@ -276,11 +284,12 @@
     c.p.forEach((s) => init(s, 'p')); c.e.forEach((s) => init(s, 'e'));
     return c;
   };
-  function cooldown(s) { return clamp((4.4 - s.exp * 0.17 - (s._side === 'p' ? (S.morale - 50) * 0.01 : 0) + rnd(-0.3, 0.3)) * (s._side === 'p' ? R.cdMod() : 1), 1.4, 6); }
+  function cooldown(s) { return clamp((4.4 - s.exp * 0.17 - (s._side === 'p' ? (S.morale - 50) * 0.01 : 0) + rnd(-0.3, 0.3)) * (s._side === 'p' ? R.cdMod() * (1 - 0.03 * R.upLv(s, 'gun')) : 1), 1.4, 6); }
   R.hitChance = function (s, t) {
     let h = 0.5 + s.exp * 0.03 - clamp((spd(t) - 6) * 0.03, -0.1, 0.12) + (s._side === 'p' ? (S.morale - 50) * 0.002 : 0);
     if (s.crew < s.cannons * 2) h *= 0.8;
     if (s._side === 'p') h += R.hitBonus();
+    if (s._side === 'p') h += R.upM(s, 'gun');
     return clamp(h, 0.2, 0.85);
   };
   function fire(c, s, foes) {
@@ -288,7 +297,7 @@
     const hit = Math.random() < R.hitChance(s, t);
     const ev = { kind: 'shot', from: s.id, to: t.id, hit, side: s._side, sunk: false, cannonLost: false };
     if (hit) {
-      const dmg = rnd(2.5, 5) * (1 + s.exp * 0.02);
+      const dmg = rnd(2.5, 5) * (1 + s.exp * 0.02) * (1 + R.upLv(s, 'gun') * 0.1) * (s._manual ? 1.3 : 1);
       t.hull -= dmg; ev.dmg = dmg;
       if (Math.random() < 0.5) t.crew = Math.max(1, t.crew - ri(0, 2));
       if (t.cannons > 0 && Math.random() < 0.08) { t.cannons--; t._cd.pop(); t._cdm.pop(); ev.cannonLost = true; }
@@ -319,7 +328,7 @@
   R.boardChance = function (c) {
     const mine = alive(c.p), en = alive(c.e); if (!mine.length || !en.length) return 0;
     const crewRatio = clamp(avg(mine, (s) => s.crew) * mine.length / Math.max(1, avg(en, (s) => s.crew) * en.length) - 1, -1, 1);
-    return clamp(0.22 + 0.18 * (mine.length - 1) + 0.06 * (avg(mine, spd) - avg(en, spd)) + 0.03 * (avg(mine, (s) => s.exp) - avg(en, (s) => s.exp)) + 0.1 * crewRatio + (S.morale - 50) * 0.002 + R.discipline(), 0.05, 0.9);
+    return clamp(0.22 + 0.18 * (mine.length - 1) + 0.06 * (avg(mine, spd) - avg(en, spd)) + 0.03 * (avg(mine, (s) => s.exp) - avg(en, (s) => s.exp)) + 0.1 * crewRatio + (S.morale - 50) * 0.002 + R.discipline() + 0.02 * avg(mine, (s) => R.upLv(s, 'crew')), 0.05, 0.9);
   };
   R.fleeChance = function (c) {
     const mine = alive(c.p), en = alive(c.e); if (!mine.length || !en.length) return 0;
@@ -385,7 +394,7 @@
   };
   R.prizeValue = (p) => Math.round(T(p.type).cost * 0.35 * (p.hull / T(p.type).hull));
   R.keepPrize = function (p) {
-    if (S.ships.length >= C.MAX_FLEET) { R.sellPrize(p); return false; }
+    if (S.ships.length >= R.fleetLimit()) { R.sellPrize(p); return false; }
     S.ships.push(R.mkShip(p.type, { hull: p.hull, crew: p.crew, exp: p.exp, cannons: p.cannons, name: p.name })); R.save(); return true;
   };
   R.sellPrize = function (p) { S.gold += R.prizeValue(p); R.save(); };
@@ -393,27 +402,40 @@
   // ------------------------------------------------------------------ shipyard
   const yard = () => S.port && A.port(S.port).yard;
   R.hasYard = yard;
+  R.totalRep = () => Object.keys(S.rep).reduce((a, k) => a + (S.rep[k] || 0), 0);
+  R.fleetLimit = () => { const r = R.totalRep(); return 3 + (r >= 120 ? 1 : 0) + (r >= 300 ? 1 : 0) + (r >= 600 ? 1 : 0); };
+  R.nextFleetRep = () => { const r = R.totalRep(); return [120, 300, 600].find((x) => r < x) || 0; };
+  const UPG = { hull: { timber: 6, iron: 4 }, sail: { cloth: 6 }, hold: { timber: 8 }, gun: { iron: 6 }, crew: { cloth: 4, wine: 4 } };
+  const UREP = [0, 15, 35];
+  R.upCost = (s, k) => { const lv = R.upLv(s, k); if (lv >= 3) return null; const goods = {}; Object.keys(UPG[k]).forEach((g) => { goods[g] = UPG[k][g] * (lv + 1); }); return { gold: Math.round(T(s.type).cost * [0.15, 0.3, 0.5][lv]), goods, rep: UREP[lv] }; };
+  R.canUpgrade = (s, k) => { const c = R.upCost(s, k); if (!c || !yard()) return false; if (S.gold < c.gold || repOf(S.port) < c.rep) return false; return Object.keys(c.goods).every((g) => (S.cargo[g] || 0) >= c.goods[g]); };
+  R.upgrade = function (id, k) {
+    const s = S.ships.find((x) => x.id === id); if (!s || !R.canUpgrade(s, k)) return false; const c = R.upCost(s, k);
+    S.gold -= c.gold; Object.keys(c.goods).forEach((g) => { S.cargo[g] -= c.goods[g]; if (S.cargo[g] <= 0) delete S.cargo[g]; });
+    s.up = s.up || {}; const ratio = s.hull / R.maxHull(s); s.up[k] = R.upLv(s, k) + 1; if (k === 'hull') s.hull = Math.round(R.maxHull(s) * ratio); s.upSpent = (s.upSpent || 0) + c.gold; addRep(S.port, c.gold / 4000); R.save(); return true;
+  };
+  R.renameShip = function (id, name) { const s = S.ships.find((x) => x.id === id); name = String(name || '').trim().slice(0, 18); if (!s || !name) return false; s.name = name; R.save(); return true; };
   R.shipPrice = (type) => Math.round(T(type).cost * (1 - repOf(S.port) * 0.0006));
   R.buyShip = function (type) {
-    if (!yard() || S.ships.length >= C.MAX_FLEET) return false;
+    if (!yard() || S.ships.length >= R.fleetLimit()) return false;
     const c = R.shipPrice(type); if (S.gold < c) return false;
     S.gold -= c; S.ships.push(R.mkShip(type)); addRep(S.port, c / 2000); R.save(); return true;
   };
-  R.shipSellValue = (s) => Math.round(T(s.type).cost * 0.55 * (0.4 + 0.6 * (s.hull / T(s.type).hull)));
+  R.shipSellValue = (s) => Math.round(T(s.type).cost * 0.55 * (0.4 + 0.6 * (s.hull / R.maxHull(s))) + (s.upSpent || 0) * 0.4);
   R.sellShip = function (id) {
     if (!yard() || S.ships.length <= 1) return false;
     const s = S.ships.find((x) => x.id === id); if (!s) return false;
     S.gold += R.shipSellValue(s); S.ships = S.ships.filter((x) => x.id !== id); clampCargo(); R.save(); return true;
   };
-  R.repairCost = (s) => Math.ceil((T(s.type).hull - s.hull) * C.REPAIR_PER_HULL * (R.has('carpenter') ? 0.8 : 1));
+  R.repairCost = (s) => Math.ceil((R.maxHull(s) - s.hull) * C.REPAIR_PER_HULL * (R.has('carpenter') ? 0.8 : 1));
   R.repair = function (id) {
     const s = S.ships.find((x) => x.id === id); if (!yard() || !s) return false;
     const c = R.repairCost(s); if (c <= 0 || S.gold < c) return false;
-    S.gold -= c; s.hull = T(s.type).hull; R.save(); return true;
+    S.gold -= c; s.hull = R.maxHull(s); R.save(); return true;
   };
   R.hireCrew = function (id, n) {
     const s = S.ships.find((x) => x.id === id); if (!yard() || !s) return 0;
-    const t = T(s.type); n = Math.min(n, t.crewMax - s.crew, Math.floor(S.gold / C.CREW_COST)); if (n <= 0) return 0;
+    const t = T(s.type); n = Math.min(n, R.crewMaxOf(s) - s.crew, Math.floor(S.gold / C.CREW_COST)); if (n <= 0) return 0;
     s.exp = (s.exp * s.crew + 1 * n) / (s.crew + n); s.crew += n; S.gold -= n * C.CREW_COST; R.save(); return n;
   };
   R.buyCannons = function (id, n) {

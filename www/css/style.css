@@ -154,3 +154,11 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 .portrait img { animation: bobu 3.2s ease-in-out infinite; }
 .chip img.px, .gl img.px { animation: glint 3s ease-in-out infinite; }
 .navb.on img, .navb.active svg { animation: bobu 1.6s ease-in-out infinite; }
+
+.uppanel { margin-top: 8px; border-top: 2px dashed var(--line); padding-top: 6px; }
+.uprow { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.uprow .info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.upic { width: 34px; height: 34px; flex: none; }
+.pips { display: inline-flex; gap: 3px; margin-left: 4px; } .pips i { width: 9px; height: 9px; border: 2px solid #3b2a17; background: #e3d09f; display: inline-block; } .pips i.on { background: var(--gold); }
+.need { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.rn { cursor: pointer; text-decoration: underline dotted; }

@@ -40,6 +40,17 @@ const cv = S.ships[1];
 ok(R.buyCannons(cv.id, 3) === 3, 'buy cannons');
 ok(R.buyCannons(cv.id, 99) <= A.SHIPS.caravel.cannons, 'cannon limit enforced');
 ok(R.hireCrew(cv.id, 5) === 5, 'hire crew');
+{ // upgrades
+  const hull0 = R.maxHull(cv); ok(!R.upgrade(cv.id, 'hull'), 'upgrade needs goods');
+  S.cargo.timber = 40; S.cargo.iron = 40; S.cargo.cloth = 40; S.cargo.wine = 40; S.gold = 30000;
+  ok(R.upgrade(cv.id, 'hull') && R.maxHull(cv) > hull0, 'hull upgrade raises max hull');
+  ok(!R.upgrade(cv.id, 'hull') || R.rep(S.port) >= 15, 'level 2 requires port reputation');
+  const sp0 = R.shipSpeed(cv); ok(R.upgrade(cv.id, 'sail') && R.shipSpeed(cv) > sp0, 'sail upgrade raises speed');
+  const cap0 = R.capOf(cv); ok(R.upgrade(cv.id, 'hold') && R.capOf(cv) > cap0, 'hold upgrade raises capacity');
+  ok(R.renameShip(cv.id, 'Test Ship') && cv.name === 'Test Ship', 'rename ship');
+  ok(R.fleetLimit() === 3, 'fleet limit starts at 3');
+  S.cargo = {};
+}
 S.port = 'naples';
 ok(!R.buyShip('galley'), 'no shipyard in Marseille');
 S.port = 'venice';

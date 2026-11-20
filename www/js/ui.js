@@ -119,6 +119,7 @@
   }
 
   // ------------------------------------------------------------------ SHIPYARD
+  const repOf0 = (need) => R.rep(S().port) >= need;
   function yardBody() {
     const s = S();
     const shipCards = A.SHIP_ORDER.map((k) => {
@@ -126,19 +127,32 @@
       return h('div', { class: 'card ship' }, A.shipThumb(k, 96, 54, 'p'),
         h('div', { class: 'info' }, h('b', {}, A.name(T)),
           h('div', { class: 'stats' }, stat('ship', T.cap), stat('wind', T.speed), stat('shield', T.hull), stat('cannon', T.cannons), stat('crew', T.crewMax))),
-        h('button', { class: 'btn', disabled: s.gold < price || s.ships.length >= C.MAX_FLEET, onClick: () => { if (R.buyShip(k)) { A.audio.coin(); A.toast(t('yard.bought', { n: A.name(T) })); } rerender(); } }, A.fmt(price)));
+        h('button', { class: 'btn', disabled: s.gold < price || s.ships.length >= R.fleetLimit(), onClick: () => { if (R.buyShip(k)) { A.audio.coin(); A.toast(t('yard.bought', { n: A.name(T) })); } rerender(); } }, A.fmt(price)));
     });
+    const UPI = { hull: 'up_hull', sail: 'up_sail', hold: 'up_hold', gun: 'up_cannon', crew: 'up_quarters' };
     const mine = s.ships.map((sh) => {
-      const T = A.SHIPS[sh.type]; const rc = R.repairCost(sh);
-      return h('div', { class: 'card mine' }, h('div', { class: 'mtop' }, A.shipThumb(sh.type, 64, 38, 'p'), h('div', { class: 'info' }, h('b', {}, sh.name), h('span', { class: 'sub' }, A.name(T)), bar((sh.hull / T.hull) * 100, sh.hull / T.hull < 0.4 ? 'low' : ''))),
-        h('div', { class: 'stats' }, stat('shield', Math.round(sh.hull) + '/' + T.hull), stat('crew', sh.crew + '/' + T.crewMax), stat('cannon', sh.cannons + '/' + T.cannons)),
+      const T = A.SHIPS[sh.type]; const rc = R.repairCost(sh); const mh = R.maxHull(sh), cm = R.crewMaxOf(sh); const open = U.upShip === sh.id;
+      const rows = !open ? null : h('div', { class: 'uppanel' },
+        h('div', { class: 'uprow' }, h('img', { class: 'px upic', src: 'img/ui_cannon.png' }), h('div', { class: 'info' }, h('b', {}, t('up.cannon') + ' ' + sh.cannons + '/' + T.cannons), h('span', { class: 'sub' }, t('up.cannon.d'))),
+          h('button', { class: 'btn sm', disabled: sh.cannons >= T.cannons || s.gold < C.CANNON_COST, onClick: () => { R.buyCannons(sh.id, 1); rerender(); } }, C.CANNON_COST)),
+        R.UP_KEYS.map((k) => {
+          const lv = R.upLv(sh, k), c = R.upCost(sh, k), m = R.UPM[k][Math.min(3, lv + 1)];
+          const pips = h('span', { class: 'pips' }, [1, 2, 3].map((i) => h('i', { class: i <= lv ? 'on' : '' })));
+          const txt = k === 'gun' ? t('up.gun.d', { n: Math.round(m * 100), d: Math.round(Math.min(3, lv + 1) * 10) }) : t('up.' + k + '.d', { n: Math.round(m * 100) });
+          let need = null;
+          if (c) { need = h('div', { class: 'need' }, Object.keys(c.goods).map((g) => h('span', { class: 'chip ' + ((s.cargo[g] || 0) >= c.goods[g] ? 'n' : 'd') }, A.goodIcon(g, 14), h('b', {}, (s.cargo[g] || 0) + '/' + c.goods[g]))), repOf0(c.rep) ? null : h('span', { class: 'sub' }, t('up.rep', { n: c.rep }))); }
+          return h('div', { class: 'uprow' }, h('img', { class: 'px upic', src: 'img/' + UPI[k] + '.png' }), h('div', { class: 'info' }, h('b', {}, t('up.' + k), ' ', pips), h('span', { class: 'sub' }, c ? txt : t('up.max')), need),
+            c ? h('button', { class: 'btn sm', disabled: !R.canUpgrade(sh, k), onClick: () => { if (R.upgrade(sh.id, k)) A.audio.coin(); rerender(); } }, A.fmt(c.gold)) : null);
+        }));
+      return h('div', { class: 'card mine' }, h('div', { class: 'mtop' }, A.shipThumb(sh.type, 64, 38, 'p'), h('div', { class: 'info' }, h('b', {}, sh.name), h('span', { class: 'sub' }, A.name(T)), bar((sh.hull / mh) * 100, sh.hull / mh < 0.4 ? 'low' : ''))),
+        h('div', { class: 'stats' }, stat('shield', Math.round(sh.hull) + '/' + mh), stat('crew', sh.crew + '/' + cm), stat('cannon', sh.cannons + '/' + T.cannons), stat('ship', R.capOf(sh))),
         h('div', { class: 'acts' },
           h('button', { class: 'btn sm', disabled: rc <= 0 || s.gold < rc, onClick: () => { R.repair(sh.id); rerender(); } }, t('yard.repair') + (rc > 0 ? ' ' + A.fmt(rc) : '')),
-          h('button', { class: 'btn sm', disabled: sh.crew >= T.crewMax || s.gold < C.CREW_COST, onClick: () => { R.hireCrew(sh.id, 5); rerender(); } }, t('yard.crew') + ' ' + C.CREW_COST * 5),
-          h('button', { class: 'btn sm', disabled: sh.cannons >= T.cannons || s.gold < C.CANNON_COST, onClick: () => { R.buyCannons(sh.id, 1); rerender(); } }, t('yard.cannon') + ' ' + C.CANNON_COST),
-          h('button', { class: 'btn sm ghost', disabled: s.ships.length <= 1, onClick: () => { if (R.sellShip(sh.id)) A.audio.coin(); rerender(); } }, t('yard.sell') + ' ' + A.fmt(R.shipSellValue(sh)))));
+          h('button', { class: 'btn sm', disabled: sh.crew >= cm || s.gold < C.CREW_COST, onClick: () => { R.hireCrew(sh.id, 5); rerender(); } }, t('yard.crew') + ' ' + C.CREW_COST * 5),
+          h('button', { class: 'btn sm' + (open ? '' : ' ghost'), onClick: () => { U.upShip = open ? null : sh.id; rerender(); } }, t('yard.upg')),
+          h('button', { class: 'btn sm ghost', disabled: s.ships.length <= 1, onClick: () => { if (R.sellShip(sh.id)) A.audio.coin(); rerender(); } }, t('yard.sell') + ' ' + A.fmt(R.shipSellValue(sh)))), rows);
     });
-    return h('div', { class: 'list yard' }, h('h3', {}, t('yard.ships')), shipCards, h('h3', {}, t('yard.fleet') + ' (' + s.ships.length + '/' + C.MAX_FLEET + ')'), mine);
+    return h('div', { class: 'list yard' }, h('h3', {}, t('yard.ships')), shipCards, h('h3', {}, t('yard.fleet') + ' (' + s.ships.length + '/' + R.fleetLimit() + ')'), R.nextFleetRep() ? h('p', { class: 'sub' }, t('fleet.next', { n: R.nextFleetRep() })) : null, mine);
   }
   function stat(ic, v) { return h('span', { class: 'st' }, A.icon(ic, 14), ' ' + v); }
 
@@ -261,7 +275,7 @@
       const draw = () => {
         box.replaceChildren(A.shipThumb(p.type, 74, 42, 'p'), h('div', {}, h('b', {}, p.name), h('div', { class: 'sub' }, A.name(A.SHIPS[p.type]) + ' · ' + t('res.hull', { n: Math.round((p.hull / A.SHIPS[p.type].hull) * 100) })),
           prizeState[i] ? h('div', { class: 'sub' }, t(prizeState[i] === 'keep' ? 'res.kept' : 'res.soldPrize')) : h('div', { class: 'acts' },
-            h('button', { class: 'btn sm', disabled: S().ships.length >= C.MAX_FLEET, onClick: () => { R.keepPrize(p); prizeState[i] = 'keep'; U.renderTop(); draw(); } }, t('res.keep')),
+            h('button', { class: 'btn sm', disabled: S().ships.length >= R.fleetLimit(), onClick: () => { R.keepPrize(p); prizeState[i] = 'keep'; U.renderTop(); draw(); } }, t('res.keep')),
             h('button', { class: 'btn sm ghost', onClick: () => { R.sellPrize(p); A.audio.coin(); prizeState[i] = 'sell'; U.renderTop(); draw(); } }, t('res.sellPrize', { n: A.fmt(R.prizeValue(p)) })))));
       };
       draw(); body.append(box);
@@ -284,15 +298,15 @@
     const s = S();
     const cards = s.ships.map((sh) => {
       const T = A.SHIPS[sh.type];
-      return h('div', { class: 'card mine' }, h('div', { class: 'mtop' }, A.shipThumb(sh.type, 84, 46, 'p'), h('div', { class: 'info' }, h('b', {}, sh.name), h('span', { class: 'sub' }, A.name(T) + ' · ' + t('fleet.exp', { n: sh.exp.toFixed(1) })), bar((sh.hull / T.hull) * 100, sh.hull / T.hull < 0.4 ? 'low' : ''))),
-        h('div', { class: 'stats' }, stat('shield', Math.round(sh.hull) + '/' + T.hull), stat('crew', sh.crew + '/' + T.crewMax), stat('cannon', sh.cannons + '/' + T.cannons), stat('wind', R.shipSpeed(sh).toFixed(1)), stat('ship', T.cap)));
+      return h('div', { class: 'card mine' }, h('div', { class: 'mtop' }, A.shipThumb(sh.type, 84, 46, 'p'), h('div', { class: 'info' }, h('b', { class: 'rn', title: t('up.rename'), onClick: () => U.renameModal(sh) }, sh.name, ' ✎'), h('span', { class: 'sub' }, A.name(T) + ' · ' + t('fleet.exp', { n: sh.exp.toFixed(1) })), bar((sh.hull / R.maxHull(sh)) * 100, sh.hull / R.maxHull(sh) < 0.4 ? 'low' : ''))),
+        h('div', { class: 'stats' }, stat('shield', Math.round(sh.hull) + '/' + R.maxHull(sh)), stat('crew', sh.crew + '/' + R.crewMaxOf(sh)), stat('cannon', sh.cannons + '/' + T.cannons), stat('wind', R.shipSpeed(sh).toFixed(1)), stat('ship', R.capOf(sh))));
     });
     const cargo = Object.keys(s.cargo).length ? h('div', { class: 'cargo' }, Object.keys(s.cargo).map((g) => h('span', { class: 'chip n' }, A.goodIcon(g, 15), h('b', {}, A.name(A.GOOD_BY_ID[g]) + ' ' + s.cargo[g])))) : h('p', { class: 'sub' }, t('fleet.empty'));
     const repList = Object.keys(s.rep).filter((id) => s.rep[id] > 0).sort((a, b) => s.rep[b] - s.rep[a]).slice(0, 6).map((id) => h('div', { class: 'rrow' }, h('span', {}, A.name(A.port(id))), stars(s.rep[id])));
     return h('div', { class: 'scr list pad' },
       h('div', { class: 'sumcard' }, h('div', {}, h('b', {}, t('fleet.cap')), ' ' + R.cargoCount() + '/' + R.fleetCap()), h('div', {}, h('b', {}, t('fleet.speed')), ' ' + R.fleetSpeed().toFixed(1)), h('div', {}, h('b', {}, t('fleet.morale')), ' ' + Math.round(s.morale) + ' · ' + t(moraleKey(s.morale))), h('p', { class: 'sub' }, t('fleet.moraleHelp'))),
       h('div', { class: 'company' }, h('span', { html: A.flagSvg(s.profile.flag, 44) }), h('b', {}, s.profile.name)),
-      h('h3', {}, t('fleet.ships') + ' (' + s.ships.length + '/' + C.MAX_FLEET + ')'), cards,
+      h('h3', {}, t('fleet.ships') + ' (' + s.ships.length + '/' + R.fleetLimit() + ')'), cards,
       h('h3', {}, t('fleet.captains') + ' (' + s.captains.length + '/' + R.captainSlots() + ')'), s.captains.length ? s.captains.map(captainRow) : h('p', { class: 'sub' }, t('fleet.noCaptains')),
       h('h3', {}, t('fleet.cargo')), cargo,
       h('h3', {}, t('fleet.rep')), repList.length ? repList : h('p', { class: 'sub' }, t('fleet.noRep')));
@@ -335,6 +349,11 @@
   const voiceOf = (id) => { let x = 0; for (let i = 0; i < id.length; i++) x = (x * 31 + id.charCodeAt(i)) >>> 0; return x % 5; };
   const addr = (txt) => { const n = (S().profile && S().profile.name) || 'captain'; return txt.replace(/\bcaptain\b/gi, n).replace(/\bkaptan\b/gi, n); };
 
+  U.renameModal = function (sh) {
+    const input = h('input', { class: 'pname', maxlength: 18, value: sh.name });
+    U.modal({ title: t('up.rename'), body: h('div', {}, h('p', { class: 'sub' }, t('up.name')), input), buttons: [{ label: t('up.save'), kind: 'go', onClick: () => { R.renameShip(sh.id, input.value); rerender(); } }] });
+    setTimeout(() => input.focus(), 200);
+  };
   U.profileModal = function (cb) {
     let flag = 'lion'; const input = h('input', { class: 'pname', maxlength: 24, placeholder: t('profile.ph'), value: '' });
     const grid = h('div', { class: 'flaggrid' });

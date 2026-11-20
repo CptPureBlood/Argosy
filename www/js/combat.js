@@ -8,7 +8,7 @@
   K.start = function (pirates, opts, done) {
     opts = opts || {}; onDone = done; c = R.newCombat(pirates);
     time = 0; projs = []; parts = []; floats = []; vis = {}; pos = {}; shake = 0; speed = 1; overT = 0; finished = false; lastBoom = 0;
-    c.p.concat(c.e).forEach((s) => { vis[s.id] = { hull: s.hull, max: s.hull, sink: 0, sinking: false, flash: 0, phase: Math.random() * 6 }; });
+    c.p.concat(c.e).forEach((s) => { vis[s.id] = { hull: s.hull, max: (s._side === 'p' && R.maxHull) ? R.maxHull(s) : s.hull, sink: 0, sinking: false, flash: 0, phase: Math.random() * 6 }; });
     if (opts.enemyVolley) c.e.forEach((s) => s._cd.forEach((_, i) => { s._cd[i] = Math.min(s._cd[i], 0.2 + i * 0.15); }));
     A.audio.gullsStop(); A.audio.battleStart && A.audio.battleStart(); A.audio.ambOn && A.audio.ambOn('battle_tail', 0.35);
     cv = h('canvas', { class: 'combatcv' });
@@ -153,7 +153,7 @@
   function bars(s, p, v) {
     const T = A.SHIPS[s.type]; const bw = Math.max(54, Math.min(p.wd, 90)); const x = p.x - bw / 2, y = p.y + 10;
     ctx.fillStyle = 'rgba(30,20,10,0.55)'; ctx.fillRect(x - 1, y - 1, bw + 2, 7);
-    const pct = Math.max(0, v.hull / T.hull); ctx.fillStyle = pct > 0.5 ? '#5aa65a' : pct > 0.25 ? '#d6a53a' : '#c0432a'; ctx.fillRect(x, y, bw * pct, 5);
+    const pct = Math.max(0, v.hull / (v.max || T.hull)); ctx.fillStyle = pct > 0.5 ? '#5aa65a' : pct > 0.25 ? '#d6a53a' : '#c0432a'; ctx.fillRect(x, y, bw * pct, 5);
     const n = s._cd ? s._cd.length : 0; const cw = Math.min(5, (bw - 2) / Math.max(1, n) - 1);
     for (let i = 0; i < n; i++) { const ready = 1 - Math.max(0, s._cd[i]) / (s._cdm[i] || 4); ctx.fillStyle = 'rgba(30,20,10,0.5)'; ctx.fillRect(x + i * (cw + 1), y + 8, cw, 4); ctx.fillStyle = ready >= 0.98 ? '#ffd66b' : '#e9a34a'; ctx.fillRect(x + i * (cw + 1), y + 8, cw * Math.max(0, Math.min(1, ready)), 4); }
     ctx.font = '600 10px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2.5;
