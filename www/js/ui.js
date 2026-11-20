@@ -80,11 +80,12 @@
     const tabs = h('div', { class: 'seg' },
       h('button', { class: U.tab === 'market' ? 'on' : '', onClick: () => { U.tab = 'market'; rerender(); } }, t('tab.market')),
       p.yard ? h('button', { class: U.tab === 'yard' ? 'on' : '', onClick: () => { U.tab = 'yard'; rerender(); } }, t('tab.yard')) : null,
+      h('button', { class: U.tab === 'estate' ? 'on' : '', onClick: () => { U.tab = 'estate'; rerender(); } }, t('tab.estate')),
       h('button', { class: U.tab === 'tavern' ? 'on' : '', onClick: () => { U.tab = 'tavern'; rerender(); } }, t('tab.tavern')),
       h('button', { onClick: () => { R.rest(); A.audio.gullsStart(); A.toast(t('port.rested')); rerender(); } }, t('port.rest')),
       h('button', { class: 'go', onClick: () => U.go('map') }, t('port.depart')));
     if (U.tab === 'yard' && !p.yard) U.tab = 'market';
-    return h('div', { class: 'scr port' }, head, tabs, U.tab === 'market' ? marketBody(p) : U.tab === 'tavern' ? tavernBody(p) : yardBody(p));
+    return h('div', { class: 'scr port' }, head, tabs, U.tab === 'market' ? marketBody(p) : U.tab === 'tavern' ? tavernBody(p) : U.tab === 'estate' ? estateBody(p) : yardBody(p));
   }
 
   function marketBody(p) {
@@ -328,6 +329,23 @@
         h('span', { class: 'sub' }, hire ? t('tavern.cost', { f: A.fmt(c.fee), w: c.wage }) : t('tavern.wage', { w: c.wage }))),
       hire ? h('button', { class: 'btn sm', disabled: s.gold < c.fee || s.captains.length >= R.captainSlots(), onClick: () => { if (R.hireCaptain(c.id)) { A.audio.coin(); A.toast(t('tavern.hired', { n: c.name })); } rerender(); } }, t('tavern.hire'))
         : h('button', { class: 'btn sm ghost', onClick: () => { R.dismissCaptain(c.id); rerender(); } }, t('tavern.dismiss')));
+  }
+  function estateBody(p) {
+    const s = S(); const wi = R.whInfo(); const th = R.thAt();
+    const goodsRow = (src, act, label, off) => Object.keys(src).map((g) => h('div', { class: 'uprow' }, A.goodIcon(g, 26), h('div', { class: 'info' }, h('b', {}, A.name(A.GOOD_BY_ID[g]) + ' ' + src[g])),
+      h('button', { class: 'btn sm', disabled: off, onClick: () => { act(g, 10); rerender(); } }, label)));
+    const whCard = h('div', { class: 'card' }, h('h3', {}, t('est.wh')), h('p', { class: 'sub' }, t('est.wh.d', { n: R.WH_CAP })),
+      h('p', {}, wi ? (wi.active ? t('est.left', { n: wi.left }) + ' · ' + wi.used + '/' + R.WH_CAP : t('est.expired')) : t('est.none')),
+      h('div', { class: 'acts' }, R.WH.map((o, i) => h('button', { class: 'btn sm', disabled: s.gold < o.c, onClick: () => { if (R.whRent(i)) A.audio.coin(); rerender(); } }, t('est.rent', { d: o.d }) + ' ' + o.c))),
+      wi && wi.used ? h('div', {}, h('h4', {}, t('est.stored')), goodsRow(wi.goods, R.whTake, t('est.take'), false)) : null,
+      wi && wi.active && Object.keys(s.cargo).length ? goodsRow(s.cargo, R.whPut, t('est.put'), false) : null);
+    const thCard = h('div', { class: 'card' }, h('h3', {}, t('est.th')), h('p', { class: 'sub' }, t('est.th.d', { n: R.TH_CAP, u: 6 })),
+      th ? h('div', {}, h('p', {}, R.thCount(th) + '/' + R.TH_CAP), Object.keys(th.stock).length ? goodsRow(th.stock, () => {}, '', true).length && h('div', { class: 'cargo' }, Object.keys(th.stock).map((g) => h('span', { class: 'chip n' }, A.goodIcon(g, 15), h('b', {}, th.stock[g])))) : h('p', { class: 'sub' }, t('est.empty')),
+        h('button', { class: 'btn sm', disabled: !R.thCount(th), onClick: () => { R.thCollect(); A.audio.coin(); rerender(); } }, t('est.collect')))
+        : h('button', { class: 'btn sm', disabled: s.gold < R.TH_COST, onClick: () => { if (R.thBuy()) A.audio.gong(); rerender(); } }, t('est.buy') + ' ' + R.TH_COST));
+    const fitCard = h('div', { class: 'card' }, h('h3', {}, t('est.fit')), h('p', { class: 'sub' }, t('est.fit.d', { c: R.FIT_COST })),
+      h('button', { class: 'btn sm' + (s.fitter ? ' ghost' : ''), onClick: () => { R.fitterToggle(); rerender(); } }, s.fitter ? t('est.fire') + ' (' + t('est.on') + ')' : t('est.hire') + ' ' + R.fitterCost() + '/d'));
+    return h('div', { class: 'list yard' }, whCard, thCard, fitCard);
   }
   function tavernBody() {
     const s = S(); const list = R.tavern(s.port);

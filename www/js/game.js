@@ -197,7 +197,7 @@
       m.stock = Math.max(0, m.stock + (m.ref - m.stock) * 0.06 + rnd(-1, 1) * m.ref * 0.02);
     }));
     const up = Math.round(S.ships.reduce((a, s) => a + s.crew, 0) * C.UPKEEP_PER_CREW * R.upkeepMod()) + R.wages();
-    R.dailyLife();
+    R.dailyLife(); R.estateDay();
     S.gold -= up; let broke = false;
     if (S.gold < 0) { S.gold = 0; S.morale = clamp(S.morale - 4, 0, 100); broke = true; }
     if (S.day >= S.skullUntil) rollSkulls();
@@ -415,6 +415,27 @@
     s.up = s.up || {}; const ratio = s.hull / R.maxHull(s); s.up[k] = R.upLv(s, k) + 1; if (k === 'hull') s.hull = Math.round(R.maxHull(s) * ratio); s.upSpent = (s.upSpent || 0) + c.gold; addRep(S.port, c.gold / 4000); R.save(); return true;
   };
   R.renameShip = function (id, name) { const s = S.ships.find((x) => x.id === id); name = String(name || '').trim().slice(0, 18); if (!s || !name) return false; s.name = name; R.save(); return true; };
+  // ---- estate: warehouse, trading house, fitter
+  const WH = [{ d: 30, c: 150 }, { d: 90, c: 380 }, { d: 180, c: 650 }], WH_CAP = 80, TH_COST = 6000, TH_CAP = 60, TH_UPKEEP = 6, FIT_COST = 15;
+  R.WH = WH; R.WH_CAP = WH_CAP; R.TH_COST = TH_COST; R.TH_CAP = TH_CAP; R.FIT_COST = FIT_COST;
+  const whOf = (p) => { S.wh = S.wh || {}; return S.wh[p || S.port]; };
+  R.whInfo = (p) => { const w = whOf(p); if (!w) return null; return { left: w.until - S.day, active: w.until >= S.day, goods: w.goods, used: Object.values(w.goods).reduce((a, b) => a + b, 0) }; };
+  R.whRent = function (i) { const o = WH[i]; if (!o || S.gold < o.c) return false; S.gold -= o.c; const w = whOf() || (S.wh[S.port] = { until: S.day, goods: {} }); w.until = Math.max(w.until, S.day) + o.d; R.save(); return true; };
+  R.whPut = function (g, n) { const w = whOf(); const i = R.whInfo(); if (!w || !i.active) return 0; n = Math.min(n, S.cargo[g] || 0, WH_CAP - i.used); if (n <= 0) return 0; S.cargo[g] -= n; if (S.cargo[g] <= 0) { delete S.cargo[g]; delete S.basis[g]; } w.goods[g] = (w.goods[g] || 0) + n; R.save(); return n; };
+  R.whTake = function (g, n) { const w = whOf(); if (!w) return 0; n = Math.min(n, w.goods[g] || 0, R.fleetCap() - R.cargoCount()); if (n <= 0) return 0; w.goods[g] -= n; if (w.goods[g] <= 0) delete w.goods[g]; S.cargo[g] = (S.cargo[g] || 0) + n; if (S.basis[g] == null) S.basis[g] = 0; R.save(); return n; };
+  R.thAt = (p) => (S.th && S.th[p || S.port]) || null;
+  R.thBuy = function () { if (R.thAt() || S.gold < TH_COST) return false; S.th = S.th || {}; S.th[S.port] = { stock: {} }; S.gold -= TH_COST; R.save(); return true; };
+  R.thCount = (th) => Object.values(th.stock).reduce((a, b) => a + b, 0);
+  R.thCollect = function () { const th = R.thAt(); if (!th) return 0; let got = 0; Object.keys(th.stock).forEach((g) => { const n = Math.min(th.stock[g], R.fleetCap() - R.cargoCount()); if (n > 0) { th.stock[g] -= n; if (th.stock[g] <= 0) delete th.stock[g]; S.cargo[g] = (S.cargo[g] || 0) + n; got += n; } }); R.save(); return got; };
+  R.fitterCost = () => S.ships.length * FIT_COST;
+  R.fitterToggle = function () { S.fitter = !S.fitter; R.save(); return S.fitter; };
+  R.estateDay = function () {
+    Object.keys(S.wh || {}).forEach((p) => { if (S.wh[p].until + 30 < S.day) delete S.wh[p]; });
+    let cost = 0;
+    Object.keys(S.th || {}).forEach((p) => { const th = S.th[p], port = A.port(p); cost += TH_UPKEEP; if (R.thCount(th) < TH_CAP) { port.p.forEach((g) => { th.stock[g] = (th.stock[g] || 0) + 1; }); } });
+    if (S.fitter) { const fc = R.fitterCost(); if (S.gold >= fc + cost) { cost += fc; S.ships.forEach((sh) => { sh.hull = Math.min(R.maxHull(sh), sh.hull + R.maxHull(sh) * 0.015); }); } else S.fitter = false; }
+    S.gold = Math.max(0, S.gold - cost); return cost;
+  };
   R.shipPrice = (type) => Math.round(T(type).cost * (1 - repOf(S.port) * 0.0006));
   R.buyShip = function (type) {
     if (!yard() || S.ships.length >= R.fleetLimit()) return false;

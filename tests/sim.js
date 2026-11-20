@@ -49,6 +49,10 @@ ok(R.hireCrew(cv.id, 5) === 5, 'hire crew');
   const cap0 = R.capOf(cv); ok(R.upgrade(cv.id, 'hold') && R.capOf(cv) > cap0, 'hold upgrade raises capacity');
   ok(R.renameShip(cv.id, 'Test Ship') && cv.name === 'Test Ship', 'rename ship');
   ok(R.fleetLimit() === 3, 'fleet limit starts at 3');
+  S.cargo = {}; S.gold = 20000; ok(R.whRent(0) && R.whInfo().active, 'rent warehouse');
+  S.cargo.salt = 10; ok(R.whPut('salt', 6) === 6 && R.whInfo().goods.salt === 6, 'store goods'); ok(R.whTake('salt', 6) === 6, 'take goods');
+  ok(R.thBuy() && !!R.thAt(), 'build trading house'); for (let i = 0; i < 5; i++) R.advanceDay(); ok(R.thCount(R.thAt()) > 0, 'trading house produces'); ok(R.thCollect() > 0, 'collect production');
+  S.ships[0].hull = 10; R.fitterToggle(); R.advanceDay(); ok(S.ships[0].hull > 10, 'fitter repairs');
   S.cargo = {};
 }
 S.port = 'naples';
