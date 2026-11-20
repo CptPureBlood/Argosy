@@ -42,9 +42,9 @@
         h('span', { class: 'tc' }, A.icon('ship', 14), ' ' + R.cargoCount() + '/' + R.fleetCap())));
     keep.forEach((k) => top.append(k));
   };
-  const NAVS = [['port', 'market', 'nav.port'], ['map', 'compass', 'nav.map'], ['fleet', 'ship', 'nav.fleet'], ['quests', 'crew', 'nav.mayor'], ['menu', 'menu', 'nav.menu']];
+  const NAVS = [['port', 'market', 'nav.port'], ['map', 'compass', 'nav.map'], ['fleet', 'fleetnav', 'nav.fleet'], ['quests', 'mayornav', 'nav.mayor'], ['menu', 'menu', 'nav.menu']];
   U.renderNav = function () {
-    $('nav').replaceChildren(...NAVS.map(([id, ic, key]) => h('button', { class: 'navb' + (U.screen === id ? ' on' : ''), onClick: () => U.go(id) }, A.icon(ic, 21), h('span', {}, t(key)))));
+    $('nav').replaceChildren(...NAVS.map(([id, ic, key]) => h('button', { class: 'navb' + (U.screen === id ? ' on' : ''), onClick: () => U.go(id) }, A.icon(ic, 26), h('span', {}, t(key)))));
   };
 
   U.go = function (screen) {

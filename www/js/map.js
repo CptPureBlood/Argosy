@@ -202,7 +202,7 @@
     const draws = [];
     order.forEach((p) => {
       const q = proj(p.lon, p.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -40 || q[1] > h + 40) return;
-      const sel = M.sel === p.id; const name = p.n[lang]; const tw = ctx.measureText(name).width; const showGoods = M.k > 9 || sel; const bh = fs + 6 + (showGoods ? 17 : 0); const bwid = Math.max(tw + 10, showGoods ? 3 * 17 + 6 : 0);
+      const sel = M.sel === p.id; const name = p.n[lang]; const tw = ctx.measureText(name).width + (p.yard ? fs + 3 : 0); const showGoods = M.k > 9 || sel; const bh = fs + 6 + (showGoods ? 17 : 0); const bwid = Math.max(tw + 10, showGoods ? 3 * 17 + 6 : 0);
       const cand = [[q[0] + 8, q[1] + 6], [q[0] - bwid - 8, q[1] + 6], [q[0] - bwid / 2, q[1] + 10], [q[0] + 8, q[1] - bh - 4], [q[0] - bwid - 8, q[1] - bh - 4], [q[0] - bwid / 2, q[1] - bh - 14]];
       let spot = null;
       for (const c of cand) { const r = [c[0], c[1], bwid, bh]; if (!placed.some((o) => r[0] < o[0] + o[2] && r[0] + r[2] > o[0] && r[1] < o[1] + o[3] && r[1] + r[3] > o[1])) { spot = r; break; } }
@@ -217,11 +217,10 @@
       if (sel) { ctx.strokeStyle = 'rgba(138,59,36,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q[0], q[1], 11 + Math.sin(time * 4) * 2, 0, 6.3); ctx.stroke(); }
       ctx.fillStyle = here ? '#8a3b24' : '#f6ecd0'; ctx.strokeStyle = '#2c1d0e'; ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.arc(q[0], q[1], 5.5, 0, 6.3); ctx.fill(); ctx.stroke();
-      if (p.yard) { const ya = A.img('bd_yard'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ya, q[0] + 6, q[1] - 22 + Math.sin(time * 2 + p.lon) * 1.2, 16, 16); } else icon(A.ICONS.anchor, q[0] + 11, q[1] - 11, 0.62, '#2c1d0e', 2.4); }
       if (here) { const fl = A.img('mk_flag'); if (fl.complete && fl.naturalWidth) { ctx.imageSmoothingEnabled = false; const fw = 20, fh = fw * fl.naturalHeight / fl.naturalWidth, rr = 18; for (let r = 0; r < rr; r++) { const dx = Math.sin(time * 5 + r * 0.45) * 1.6 * (r / rr); ctx.drawImage(fl, 0, r * fl.naturalHeight / rr, fl.naturalWidth, fl.naturalHeight / rr + 0.5, q[0] - 3 + dx, q[1] - 6 - fh + r * fh / rr, fw, fh / rr + 0.5); } } }
-      if (S && S.skulls.indexOf(p.id) >= 0) { const bob = Math.sin(time * 3) * 1.5; const sk = A.img('mk_skull'); if (sk.complete && sk.naturalWidth) { ctx.imageSmoothingEnabled = false; const ps = 18 + Math.sin(time * 4) * 1.5; ctx.drawImage(sk, q[0] - ps / 2, q[1] - 20 + bob - ps / 2, ps, ps); } else { ctx.fillStyle = 'rgba(246,236,208,0.85)'; ctx.beginPath(); ctx.arc(q[0], q[1] - 20 + bob, 9.5, 0, 6.3); ctx.fill(); icon(A.ICONS.skull, q[0], q[1] - 20 + bob, 0.62, '#8a1f14', 2.2); } }
+      if (S && S.skulls.indexOf(p.id) >= 0) { const sk = A.img('mk_skull'); const ps = Math.max(30, Math.min(44, M.k * 2.4)); const bob = Math.sin(time * 2.5) * 1.5; if (sk.complete && sk.naturalWidth) { ctx.imageSmoothingEnabled = false; const sh = ps * sk.naturalHeight / sk.naturalWidth; ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(q[0], q[1] - 8, ps * 0.4, ps * 0.14, 0, 0, 6.3); ctx.fill(); ctx.drawImage(sk, q[0] - ps / 2, q[1] - 12 - sh + bob, ps, sh); } else { ctx.fillStyle = 'rgba(246,236,208,0.9)'; ctx.beginPath(); ctx.arc(q[0], q[1] - 22 + bob, 13, 0, 6.3); ctx.fill(); icon(A.ICONS.skull, q[0], q[1] - 22 + bob, 0.9, '#8a1f14', 2.2); } }
       if (spot) {
-        ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + 5, spot[1] + fs);
+        ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + 5, spot[1] + fs); if (p.yard) { const ya = A.img('ui_anchor'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; const ah = fs + 1, aw = ah * ya.naturalWidth / ya.naturalHeight; ctx.drawImage(ya, spot[0] + 8 + ctx.measureText(d.name).width, spot[1] + 2, aw, ah); } }
         if (d.showGoods) p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, spot[0] + 3 + i * 17, spot[1] + fs + 5, 16, 16); });
       }
     });
