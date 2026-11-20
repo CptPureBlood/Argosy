@@ -173,7 +173,7 @@
   };
 
   // ------------------------------------------------------------------ voyage
-  R.moraleForDays = (d) => (d <= 1 ? -2 : d <= 2 ? -1 : d <= 4 ? 1 : d <= 8 ? 5 : d <= 11 ? 1 : -Math.min(5, d - 11));
+  R.moraleForDays = (d) => (d <= 1.5 ? -2 : d <= 3 ? 0 : d <= 5 ? 3 : d <= 10 ? 5 : d <= 16 ? 2 : d <= 25 ? -1 : d <= 40 ? -3 : -5);
   R.insuranceCost = () => Math.max(20, Math.round(R.cargoBaseValue() * C.INSURE_RATE));
   R.canDepart = () => S.port && S.ships.length > 0;
   R.startVoyage = function (toId, opts) {

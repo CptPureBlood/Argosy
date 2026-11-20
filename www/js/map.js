@@ -167,13 +167,13 @@
       ctx.save(); ctx.globalAlpha = pol * 0.7; ctx.strokeStyle = '#6b3e1d'; ctx.lineWidth = 1.3; ctx.setLineDash([7, 4, 1.5, 4]);
       A.BORDERS.forEach((b) => { ctx.beginPath(); b.forEach((pt, i) => { const q = proj(pt[0], pt[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.stroke(); });
       ctx.setLineDash([]); ctx.globalAlpha = pol; ctx.textAlign = 'center';
-      A.COUNTRIES.forEach((c) => { const q = proj(c.lon, c.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -20 || q[1] > h + 20) return; const fs = Math.max(10, Math.min(c.big ? 22 : 16, M.k * (c.big ? 0.72 : 0.5))); ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.fillStyle = worldImg.complete ? 'rgba(255,244,214,0.88)' : 'rgba(107,62,29,0.62)'; ctx.lineWidth = 3.5; ctx.strokeStyle = worldImg.complete ? 'rgba(30,18,6,0.7)' : 'rgba(228,214,173,0.55)'; const tx = c.n[A.lang] || c.n.en; ctx.strokeText(tx.toUpperCase(), q[0], q[1]); ctx.fillText(tx.toUpperCase(), q[0], q[1]); });
+      A.COUNTRIES.forEach((c) => { const q = proj(c.lon, c.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -20 || q[1] > h + 20) return; const fs = Math.max(10, Math.min(c.big ? 22 : 16, M.k * (c.big ? 0.72 : 0.5))); ctx.font = fs + 'px "Special Elite", Georgia, serif'; ctx.fillStyle = worldImg.complete ? 'rgba(255,244,214,0.88)' : 'rgba(107,62,29,0.62)'; ctx.lineWidth = 3.5; ctx.strokeStyle = worldImg.complete ? 'rgba(30,18,6,0.7)' : 'rgba(228,214,173,0.55)'; const tx = c.n[A.lang] || c.n.en; ctx.strokeText(tx.toUpperCase(), q[0], q[1]); ctx.fillText(tx.toUpperCase(), q[0], q[1]); });
       ctx.restore();
     }
     // free-standing landmarks
     if (M.k > 7) { const ls = Math.max(15, Math.min(34, M.k * 1.05)); A.LANDMARKS.forEach((m) => { const q = proj(m.lon, m.lat); if (q[0] < -30 || q[0] > w + 30 || q[1] < -10 || q[1] > h + 40) return; A.drawLandmark(ctx, m.t, q[0], q[1], ls); }); }
     // sea labels
-    ctx.fillStyle = worldImg.complete ? 'rgba(210,235,245,0.85)' : 'rgba(91,67,38,0.55)'; ctx.shadowColor = worldImg.complete ? 'rgba(5,25,40,0.9)' : 'transparent'; ctx.shadowBlur = 3; ctx.font = 'italic ' + Math.max(10, Math.min(22, M.k * 0.9)) + 'px Georgia, serif'; ctx.textAlign = 'center';
+    ctx.fillStyle = worldImg.complete ? 'rgba(210,235,245,0.85)' : 'rgba(91,67,38,0.55)'; ctx.shadowColor = worldImg.complete ? 'rgba(5,25,40,0.9)' : 'transparent'; ctx.shadowBlur = 3; ctx.font = Math.max(10, Math.min(22, M.k * 0.9)) + 'px "Special Elite", Georgia, serif'; ctx.textAlign = 'center';
     [['sea.med', 17, 34], ['sea.adriatic', 15.8, 43], ['sea.aegean', 25, 38.9], ['sea.tyrrhenian', 12, 39.8], ['sea.black', 34, 43.4], ['sea.atlantic', -7.5, 41], ['sea.red', 38.8, 19.5], ['sea.persian', 52.2, 27], ['sea.caspian', 50.8, 42], ['sea.arabian', 64, 16], ['sea.bengal', 88, 14], ['sea.indian', 80, 0], ['sea.scs', 114, 12], ['sea.andaman', 96.5, 10.5]].forEach((s2) => { const q = proj(s2[1], s2[2]); ctx.fillText(A.t(s2[0]), q[0], q[1]); }); ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
   }
 
@@ -202,7 +202,7 @@
   function drawPorts() {
     const S = R.S(); const lang = A.lang; const placed = []; const fs = Math.max(10, Math.min(15, M.k * 0.9)); const lm = Math.max(16, Math.min(32, M.k * 1.0));
     const order = A.PORTS.slice().sort((a, b) => (b.id === M.sel ? 2 : 0) + (S && S.port === b.id ? 1 : 0) - ((a.id === M.sel ? 2 : 0) + (S && S.port === a.id ? 1 : 0)) || (b.yard ? 1 : 0) - (a.yard ? 1 : 0));
-    ctx.font = '600 ' + fs + 'px Georgia, serif';
+    ctx.font = fs + 'px "Special Elite", Georgia, serif';
     const draws = [];
     order.forEach((p) => {
       const q = proj(p.lon, p.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -40 || q[1] > h + 40) return;
@@ -233,7 +233,7 @@
       if (here) { const fl = A.img('mk_flag'); if (fl.complete && fl.naturalWidth) { ctx.imageSmoothingEnabled = false; const fw = 20, fh = fw * fl.naturalHeight / fl.naturalWidth, rr = 18; for (let r = 0; r < rr; r++) { const dx = Math.sin(time * 5 + r * 0.45) * 1.6 * (r / rr); ctx.drawImage(fl, 0, r * fl.naturalHeight / rr, fl.naturalWidth, fl.naturalHeight / rr + 0.5, q[0] - 3 + dx, q[1] - 6 - fh + r * fh / rr, fw, fh / rr + 0.5); } } }
       if (S && S.skulls.indexOf(p.id) >= 0) { const sk = A.img('mk_skull'); const ps = Math.max(30, Math.min(44, M.k * 2.4)); const bob = Math.sin(time * 2.5) * 1.5; if (sk.complete && sk.naturalWidth) { ctx.imageSmoothingEnabled = false; const sh = ps * sk.naturalHeight / sk.naturalWidth; ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(q[0], q[1] - 8, ps * 0.4, ps * 0.14, 0, 0, 6.3); ctx.fill(); ctx.drawImage(sk, q[0] - ps / 2, q[1] - 12 - sh + bob, ps, sh); } else { ctx.fillStyle = 'rgba(246,236,208,0.9)'; ctx.beginPath(); ctx.arc(q[0], q[1] - 22 + bob, 13, 0, 6.3); ctx.fill(); icon(A.ICONS.skull, q[0], q[1] - 22 + bob, 0.9, '#8a1f14', 2.2); } }
       if (spot) {
-        ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.textAlign = 'left'; if (!sel) { ctx.lineJoin = 'round'; ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(246,238,214,0.95)'; ctx.strokeText(d.name, spot[0] + 3, spot[1] + fs); } ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + (sel ? 5 : 3), spot[1] + fs); if (p.yard) { const ya = A.img('ui_anchor'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; const ah = fs + 1, aw = ah * ya.naturalWidth / ya.naturalHeight; ctx.drawImage(ya, spot[0] + (sel ? 8 : 6) + ctx.measureText(d.name).width, spot[1] + 1, aw, ah); } }
+        ctx.font = fs + 'px "Special Elite", Georgia, serif'; ctx.textAlign = 'left'; if (!sel) { ctx.lineJoin = 'round'; ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(246,238,214,0.95)'; ctx.strokeText(d.name, spot[0] + 3, spot[1] + fs); } ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + (sel ? 5 : 3), spot[1] + fs); if (p.yard) { const ya = A.img('ui_anchor'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; const ah = fs + 1, aw = ah * ya.naturalWidth / ya.naturalHeight; ctx.drawImage(ya, spot[0] + (sel ? 8 : 6) + ctx.measureText(d.name).width, spot[1] + 1, aw, ah); } }
         if (d.showGoods) p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, spot[0] + 3 + i * 17, spot[1] + fs + 5, 16, 16); });
       }
     });
@@ -252,14 +252,14 @@
     ctx.save(); ctx.translate(36, 36); ctx.fillStyle = 'rgba(246,236,208,0.9)'; ctx.strokeStyle = '#2c1d0e'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0, 0, 22, 0, 6.3); ctx.fill(); ctx.stroke();
     const sw = Math.sin(time * 2.2) * 0.07 * str;
     ctx.rotate(b + sw); ctx.strokeStyle = '#8a3b24'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 12); ctx.lineTo(0, -12); ctx.moveTo(-6, -5); ctx.lineTo(0, -12); ctx.lineTo(6, -5); ctx.stroke(); ctx.restore();
-    ctx.fillStyle = '#2c1d0e'; ctx.font = '600 11px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText(A.t('wind.force', { n: Math.round(str * 2) }), 36, 70);
+    ctx.fillStyle = '#2c1d0e'; ctx.font = '11px "Special Elite", Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText(A.t('wind.force', { n: Math.round(str * 2) }), 36, 70);
   }
 
   function drawCompass() {
     const x = w - 46, y = h - 120; ctx.save(); ctx.translate(x, y); ctx.strokeStyle = 'rgba(91,67,38,0.8)'; ctx.lineWidth = 1.1;
     ctx.beginPath(); ctx.arc(0, 0, 22, 0, 6.3); ctx.arc(0, 0, 14, 0, 6.3); ctx.moveTo(0, -30); ctx.lineTo(0, 30); ctx.moveTo(-30, 0); ctx.lineTo(30, 0); ctx.moveTo(-16, -16); ctx.lineTo(16, 16); ctx.moveTo(-16, 16); ctx.lineTo(16, -16); ctx.stroke();
     ctx.fillStyle = '#8a3b24'; ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(5, -12); ctx.lineTo(-5, -12); ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#2c1d0e'; ctx.font = 'bold 11px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText('N', 0, -34); ctx.restore();
+    ctx.fillStyle = '#2c1d0e'; ctx.font = '11px "Special Elite", Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText('N', 0, -34); ctx.restore();
   }
 
   function drawShip() {

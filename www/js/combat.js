@@ -147,7 +147,7 @@
       ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.arc(x - 0.8, y - lift * 12 - 0.8, 0.9, 0, 6.3); ctx.fill();
     });
     ctx.textAlign = 'center';
-    floats.forEach((f) => { ctx.globalAlpha = Math.min(1, 1.6 - f.t); ctx.font = (f.big ? 'bold 17px' : 'bold 13px') + ' Georgia, serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.strokeText(f.txt, f.x, f.y - f.t * 30); ctx.fillStyle = f.col; ctx.fillText(f.txt, f.x, f.y - f.t * 30); ctx.globalAlpha = 1; });
+    floats.forEach((f) => { ctx.globalAlpha = Math.min(1, 1.6 - f.t); ctx.font = (f.big ? '17px' : '13px') + ' "Special Elite", Georgia, serif'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.strokeText(f.txt, f.x, f.y - f.t * 30); ctx.fillStyle = f.col; ctx.fillText(f.txt, f.x, f.y - f.t * 30); ctx.globalAlpha = 1; });
     ctx.restore();
   }
   function bars(s, p, v) {
@@ -156,7 +156,7 @@
     const pct = Math.max(0, v.hull / (v.max || T.hull)); ctx.fillStyle = pct > 0.5 ? '#5aa65a' : pct > 0.25 ? '#d6a53a' : '#c0432a'; ctx.fillRect(x, y, bw * pct, 5);
     const n = s._cd ? s._cd.length : 0; const cw = Math.min(5, (bw - 2) / Math.max(1, n) - 1);
     for (let i = 0; i < n; i++) { const ready = 1 - Math.max(0, s._cd[i]) / (s._cdm[i] || 4); ctx.fillStyle = 'rgba(30,20,10,0.5)'; ctx.fillRect(x + i * (cw + 1), y + 8, cw, 4); ctx.fillStyle = ready >= 0.98 ? '#ffd66b' : '#e9a34a'; ctx.fillRect(x + i * (cw + 1), y + 8, cw * Math.max(0, Math.min(1, ready)), 4); }
-    ctx.font = '600 10px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2.5;
+    ctx.font = '10px "Special Elite", Georgia, serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2.5;
     const label = s.name + ' · ' + s.crew; ctx.strokeText(label, p.x, y + 24); ctx.fillText(label, p.x, y + 24);
   }
 

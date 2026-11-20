@@ -1,6 +1,8 @@
+@font-face { font-family: 'Special Elite'; src: url('../fonts/SpecialElite-Regular.ttf') format('truetype'); font-weight: 100 900; font-display: block; }
+*, *::before, *::after { font-synthesis: none; }
 :root {
   --bg: #ecdcb6; --panel: #f6ecd0; --panel2: #e3d09f; --ink: #3b2a17; --ink2: #5b4326; --line: #a98b57; --acc: #8a3b24; --gold: #c9a24f; --green: #3f6a3a; --red: #a02a1a;
-  --serif: Georgia, 'Times New Roman', 'Noto Serif', serif;
+  --serif: 'Special Elite', Georgia, 'Times New Roman', serif;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font-family: var(--serif); overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
