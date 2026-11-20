@@ -174,3 +174,25 @@
     return c;
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
+
+/* Pixel-art sprite renderer: overrides the vector side view when sprites are available. */
+(function (G) {
+  const A = G.A; const vec = A.drawShip; const cache = {};
+  const img = (n) => { if (!cache[n]) { const i = new Image(); i.src = 'img/' + n + '.png'; cache[n] = i; } return cache[n]; };
+  ['felucca', 'caravel', 'galley', 'carrack', 'galleon'].forEach((t) => ['', '_damaged', '_pirate', '_sinking'].forEach((s) => img('ship_' + t + s)));
+  A.drawShipVec = vec;
+  // u = scale unit used by the vector renderer; sprite width ≈ u * len * k
+  A.drawShip = function (ctx, x, y, u, type, o) {
+    o = o || {}; const T = A.SHIPS[type]; const sink = o.sink || 0;
+    const st = o.side === 'e' ? '_pirate' : (sink > 0.35 ? '_sinking' : ((o.hullPct != null && o.hullPct < 0.45) ? '_damaged' : ''));
+    const im = img('ship_' + type + st);
+    if (!im.complete || !im.naturalWidth) return vec(ctx, x, y, u, type, o);
+    const dir = o.dir || 1; const time = o.time || 0; const ph = o.phase || 0;
+    const w = u * (T.len || 3) * 1.7; const hgt = w * im.naturalHeight / im.naturalWidth;
+    const bob = Math.sin(time * 1.6 + ph) * u * 0.05;
+    ctx.save(); ctx.imageSmoothingEnabled = false;
+    ctx.translate(x, y + bob + sink * u * 0.9); ctx.rotate(dir * (Math.sin(time * 1.1 + ph) * 0.03 + sink * 0.35)); ctx.scale(dir, 1);
+    ctx.drawImage(im, -w / 2, -hgt * 0.82, w, hgt);
+    ctx.restore();
+  };
+})(typeof globalThis !== 'undefined' ? globalThis : window);
