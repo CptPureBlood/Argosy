@@ -219,17 +219,30 @@
   U.voyTick = voyTick;
   function afterTick(res) {
     U.renderTop(); if (U.screen === 'map') renderSheet();
-    let enc = null;
+    let enc = null, sea = null;
     res.events.forEach((ev) => {
       if (ev.type === 'storm') { A.toast(t('ev.storm', { s: ev.ship }) + (ev.refund ? ' ' + t('ev.refund', { n: A.fmt(ev.refund) }) : ''), 'bad'); A.audio.hit(); }
       else if (ev.type === 'calm') A.toast(t('ev.calm'));
       else if (ev.type === 'broke') A.toast(t('ev.broke'), 'bad');
       else if (ev.type === 'questExpired') A.toast(t('ev.questExpired'), 'bad');
       else if (ev.type === 'pirates') enc = ev;
+      else if (ev.type === 'sea') sea = ev;
     });
     if (enc) { showEncounter(enc.zone); return; }
+    if (sea) { showSeaEvent(sea.id, res.arrived); return; }
     if (res.arrived) { finishVoyage(); return; }
     voy.busy = false; setTimeout(voyTick, 140);
+  }
+  U.showSeaEvent = showSeaEvent;
+  function showSeaEvent(id, arrived) {
+    const e = A.SEA_BY_ID[id], L = A.lang === 'tr' ? 1 : 0; A.audio.gong && A.audio.gong();
+    const body = h('div', { class: 'seaev' }, h('p', { class: 'evq' }, e[A.lang === 'tr' ? 'tr' : 'en']));
+    const buttons = e.o.map((o, i) => ({ label: o[L] + (R.seaHint(o[2], A.lang) ? '  [' + R.seaHint(o[2], A.lang) + ']' : ''), kind: i ? '' : 'go', onClick: () => {
+      const done = R.seaApply(id, i); A.toast(R.seaSummary(done, A.lang), done.some((d) => (d.m < 0 || d.g < 0 || d.s < 0 || d.h)) ? 'bad' : '');
+      U.renderTop(); if (U.screen === 'map') renderSheet();
+      setTimeout(() => { if (arrived) finishVoyage(); else { voy.busy = false; setTimeout(voyTick, 140); } }, 250);
+    } }));
+    U.modal({ title: A.lang === 'tr' ? 'Seyirde olay!' : 'Event at sea!', body, buttons });
   }
   function finishVoyage() {
     const a = R.arrive(); voy.busy = false; A.map.follow = false; A.map.setShipDocked(a.port);

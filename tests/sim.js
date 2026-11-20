@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 global.window = global;
 const root = path.join(__dirname, '..', 'www', 'js');
-['data.js', 'world-data.js', 'ports.js', 'world.js', 'game.js', 'content.js', 'game2.js', 'i18n.js'].forEach((f) => require(path.join(root, f)));
+['data.js', 'world-data.js', 'ports.js', 'world.js', 'game.js', 'content.js', 'game2.js', 'sea-events.js', 'i18n.js'].forEach((f) => require(path.join(root, f)));
 const A = global.A, R = A.game, W = A.world;
 
 let failed = 0;
@@ -59,6 +59,12 @@ S.port = 'naples';
 ok(!R.buyShip('galley'), 'no shipyard in Marseille');
 S.port = 'venice';
 
+// ---- sea events
+{ ok(A.SEA_EVENTS.length >= 38, 'sea events defined: ' + A.SEA_EVENTS.length);
+  ok(A.SEA_EVENTS.every((e) => e.en && e.tr && e.o.length === 2 && e.o.every((o) => o[0] && o[1])), 'sea events bilingual with two options');
+  const sv = R.S(); const bak = JSON.stringify(sv); sv.voyage = { from: 'venice', to: 'athens', total: 800, travelled: 100, days: 3 }; let okAll = true;
+  A.SEA_EVENTS.forEach((e) => e.o.forEach((o, i) => { try { sv.gold = 500; R.seaApply(e.id, i); } catch (x) { okAll = false; console.error(e.id, x.message); } }));
+  ok(okAll, 'all sea event options apply'); Object.keys(sv).forEach((k) => { delete sv[k]; }); Object.assign(sv, JSON.parse(bak)); }
 // ---- escort, insurance, voyage
 ok(R.hireEscort('light') && S.escortShip, 'hire escort');
 R.cancelEscort();

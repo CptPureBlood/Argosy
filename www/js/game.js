@@ -215,7 +215,7 @@
     const events = [];
     let f = R.windFactor(pos.heading);
     if (S.wind.str < 0.8 && Math.random() < 0.1) { f *= 0.3; events.push({ type: 'calm' }); }
-    v.travelled = Math.min(v.total, v.travelled + R.fleetSpeed() * C.NM_PER_KNOT_DAY * f);
+    v.travelled = Math.min(v.total, v.travelled + R.fleetSpeed() * (v.spd || 1) * C.NM_PER_KNOT_DAY * f);
     v.days++;
     const d = advanceDay();
     if (d.broke) events.push({ type: 'broke' });
@@ -233,9 +233,10 @@
     let pc = (0.03 + 0.3 * zone) * early * (S.escort ? 0.85 : 1) * R.lookoutMod();
     if (v.total - v.travelled < 35) pc = 0;
     if (Math.random() < pc) events.push({ type: 'pirates', zone });
+    if (!events.some((e) => e.type === 'pirates') && v.total - v.travelled > 30 && R.seaPick && Math.random() < 0.10) events.push({ type: 'sea', id: R.seaPick() });
     if (R.has('shipwright')) S.ships.forEach((sh) => { sh.hull = Math.min(T(sh.type).hull, sh.hull + T(sh.type).hull * 0.01); });
     const arrived = v.travelled >= v.total - 0.01;
-    if (!events.some((e) => e.type === 'pirates')) R.save();
+    if (!events.some((e) => e.type === 'pirates' || e.type === 'sea')) R.save();
     return { events, arrived, pos: np };
   };
   R.arrive = function () {
