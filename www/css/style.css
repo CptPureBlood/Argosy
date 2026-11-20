@@ -93,8 +93,8 @@ h1, h2, h3 { margin: 0; font-weight: 700; } h3 { font-size: 17px; margin: 14px 0
 .sheet .seg { margin: 4px 0 0; }
 
 /* overlay, modal, toast */
-#overlay { position: fixed; inset: 0; z-index: 40; pointer-events: none; } #overlay > * { pointer-events: auto; }
-.modalback { position: fixed; inset: 0; background: rgba(40,28,10,.55); display: flex; align-items: center; justify-content: center; padding: 18px; animation: fade .18s; z-index: 45; } .modalback.out { opacity: 0; transition: opacity .18s; }
+#overlay { position: fixed; inset: 0; z-index: 140; pointer-events: none; } #overlay > * { pointer-events: auto; }
+.modalback { position: fixed; inset: 0; background: rgba(40,28,10,.55); display: flex; align-items: center; justify-content: center; padding: 18px; animation: fade .18s; z-index: 145; } .modalback.out { opacity: 0; transition: opacity .18s; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 .modal { background: var(--bg); border: 3px double var(--ink); padding: 18px 16px 14px; width: 100%; max-width: 380px; max-height: 88dvh; overflow-y: auto; animation: pop .22s ease-out; box-shadow: 0 8px 0 rgba(0,0,0,.25); }
 @keyframes pop { from { transform: scale(.92); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -129,3 +129,7 @@ h1, h2, h3 { margin: 0; font-weight: 700; } h3 { font-size: 17px; margin: 14px 0
 .bubble{background:#f3e8c6;border:1.5px solid var(--ink);border-radius:8px;padding:9px 11px;margin:10px 0;font-size:14px;line-height:1.35}
 .mayorbox .lbl{font-weight:700;margin:6px 0 3px}.news{background:#f3e8c6}.news .evg{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:5px}
 .card.loan.late{border-color:#a8321f;background:#f2d2c8}.tavhint{padding:8px 4px}
+
+.pname{width:100%;box-sizing:border-box;font:inherit;font-size:17px;padding:9px 10px;border:2px solid var(--ink);background:#fbf3d9;color:var(--ink);border-radius:3px}
+.flaggrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}.flagbtn{background:var(--panel);border:2px solid transparent;border-radius:4px;padding:4px;line-height:0}.flagbtn.on{border-color:var(--ink);background:#e6d3a0}
+.company{display:flex;align-items:center;gap:10px;padding:2px 0 4px;font-size:18px}

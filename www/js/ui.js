@@ -291,6 +291,7 @@
     const repList = Object.keys(s.rep).filter((id) => s.rep[id] > 0).sort((a, b) => s.rep[b] - s.rep[a]).slice(0, 6).map((id) => h('div', { class: 'rrow' }, h('span', {}, A.name(A.port(id))), stars(s.rep[id])));
     return h('div', { class: 'scr list pad' },
       h('div', { class: 'sumcard' }, h('div', {}, h('b', {}, t('fleet.cap')), ' ' + R.cargoCount() + '/' + R.fleetCap()), h('div', {}, h('b', {}, t('fleet.speed')), ' ' + R.fleetSpeed().toFixed(1)), h('div', {}, h('b', {}, t('fleet.morale')), ' ' + Math.round(s.morale) + ' · ' + t(moraleKey(s.morale))), h('p', { class: 'sub' }, t('fleet.moraleHelp'))),
+      h('div', { class: 'company' }, h('span', { html: A.flagSvg(s.profile.flag, 44) }), h('b', {}, s.profile.name)),
       h('h3', {}, t('fleet.ships') + ' (' + s.ships.length + '/' + C.MAX_FLEET + ')'), cards,
       h('h3', {}, t('fleet.captains') + ' (' + s.captains.length + '/' + R.captainSlots() + ')'), s.captains.length ? s.captains.map(captainRow) : h('p', { class: 'sub' }, t('fleet.noCaptains')),
       h('h3', {}, t('fleet.cargo')), cargo,
@@ -322,14 +323,39 @@
       h('h3', {}, t('tavern.crew')), h('button', { class: 'btn big', disabled: s.gold < R.treatCost() || s.treatDay === s.day, onClick: () => { if (R.treatCrew()) { A.audio.coin(); A.toast(t('tavern.treated')); } rerender(); } }, t('tavern.treat', { c: A.fmt(R.treatCost()) })));
   }
 
+  // typewriter text: faster than reading speed, with the cello mumble while it flows
+  U.typeText = function (el, text, voice, done) {
+    const cps = 62; const t0 = Date.now(); let fin = false;
+    const end = () => { if (fin) return; fin = true; clearInterval(iv); el.textContent = text; A.audio.voiceStop(); done && done(); };
+    A.audio.voiceStart(voice);
+    const iv = setInterval(() => { if (!el.isConnected) { clearInterval(iv); fin = true; A.audio.voiceStop(); return; } const n = Math.floor((Date.now() - t0) / 1000 * cps); if (n >= text.length) end(); else el.textContent = text.slice(0, n); }, 30);
+    el.addEventListener('click', end); return end;
+  };
+  const voiceOf = (id) => { let x = 0; for (let i = 0; i < id.length; i++) x = (x * 31 + id.charCodeAt(i)) >>> 0; return x % 5; };
+  const addr = (txt) => { const n = (S().profile && S().profile.name) || 'captain'; return txt.replace(/\bcaptain\b/gi, n).replace(/\bkaptan\b/gi, n); };
+
+  U.profileModal = function (cb) {
+    let flag = 'lion'; const input = h('input', { class: 'pname', maxlength: 24, placeholder: t('profile.ph'), value: '' });
+    const grid = h('div', { class: 'flaggrid' });
+    const draw = () => { grid.innerHTML = ''; A.FLAGS.forEach((f) => grid.append(h('button', { class: 'flagbtn' + (f.id === flag ? ' on' : ''), title: t('flag.' + f.id), onClick: () => { flag = f.id; draw(); A.audio.coin(); }, html: A.flagSvg(f.id, 54) }))); };
+    draw();
+    U.modal({ title: t('profile.title'), cls: 'profile', body: h('div', {}, h('p', { class: 'sub' }, t('profile.name')), input, h('p', { class: 'sub' }, t('profile.flag')), grid),
+      buttons: [{ label: t('profile.start'), kind: 'go', onClick: () => { cb({ name: input.value.trim() || t('profile.def'), flag }); } }] });
+    setTimeout(() => input.focus(), 200);
+  };
+
   U.mayorModal = function (portId) {
     const m = R.mayor(portId); if (!m) return; const first = !R.hasMet(portId); R.meet(portId);
     const evs = R.eventsAt(portId).map(R.eventText).slice(0, 2);
     const news = evs.map((e) => h('div', { class: 'news' }, h('b', {}, e.title), h('div', { class: 'sub' }, e.text)));
+    const bubble = h('p', { class: 'bubble' }, '');
+    const line = addr(first ? (m.say[A.lang] || m.say.en) : t('mayor.back'));
+    const stopVoice = () => A.audio.voiceStop();
     U.modal({ title: '', cls: 'mayor', body: h('div', { class: 'mayorbox' },
       h('div', { class: 'mtop' }, portrait(m.look, 88), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, m.title[A.lang] || m.title.en))),
-      h('p', { class: 'bubble' }, first ? (m.say[A.lang] || m.say.en) : t('mayor.back')), news.length ? [h('div', { class: 'lbl' }, t('mayor.news')), news] : null),
-      buttons: [{ label: t('mayor.visit'), kind: 'go', onClick: () => { U.go('quests'); } }, { label: t('mayor.ok'), kind: 'ghost' }] });
+      bubble, news.length ? [h('div', { class: 'lbl' }, t('mayor.news')), news] : null),
+      buttons: [{ label: t('mayor.visit'), kind: 'go', onClick: () => { stopVoice(); U.go('quests'); } }, { label: t('mayor.ok'), kind: 'ghost', onClick: stopVoice }] });
+    U.typeText(bubble, line, voiceOf(portId));
   };
 
   function renderQuests() {
@@ -340,7 +366,7 @@
         active ? h('div', { class: 'qbar' }, bar((have / q.qty) * 100), h('span', {}, have + '/' + q.qty), h('button', { class: 'btn sm', disabled: !R.canComplete(q), onClick: () => { if (R.completeQuest(q.id)) { A.audio.coin(); A.toast(t('q.done', { n: A.fmt(q.reward) })); } rerender(); } }, t('q.deliver')))
           : h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.quests.length >= 3, onClick: () => { R.acceptQuest(q.id); rerender(); } }, t('q.accept'))));
     };
-    const head = m ? h('div', { class: 'card mayorcard' }, portrait(m.look, 64), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, (m.title[A.lang] || m.title.en) + ' · ' + A.name(p)), h('span', { class: 'sub' }, t('mayor.hello')))) : h('p', { class: 'sub' }, t('mayor.atSea'));
+    const head = m ? h('div', { class: 'card mayorcard' }, portrait(m.look, 64), h('div', { class: 'info' }, h('b', {}, m.name), h('span', { class: 'sub' }, (m.title[A.lang] || m.title.en) + ' · ' + A.name(p)), h('span', { class: 'sub' }, t('mayor.hello', { n: (s.profile && s.profile.name) || '' })))) : h('p', { class: 'sub' }, t('mayor.atSea'));
     const evs = p ? R.eventsAt(p.id).map(R.eventText) : [];
     const news = h('div', {}, evs.length ? evs.map((e) => h('div', { class: 'card news' }, h('b', {}, e.title), h('div', { class: 'sub' }, e.text), h('div', { class: 'evg' }, e.goods.slice(0, 6).map((g) => h('span', { class: 'chip ' + (g[1] > 1 ? 'd' : 'p') }, A.goodIcon(g[0], 15), h('b', {}, (g[1] > 1 ? '▲' : '▼') + Math.abs(Math.round((g[1] - 1) * 100)) + '%'))), h('span', { class: 'sub' }, t('mayor.days', { n: e.left }))))) : h('p', { class: 'sub' }, t('mayor.noNews')));
     const offers = p ? R.offers().map((q) => questCard(q, false)) : [];
@@ -382,7 +408,7 @@
     $('splash')?.remove();
     const el = h('div', { id: 'splash', class: 'splash' }, h('div', { class: 'sbox' }, h('div', { class: 'logo', html: A.svg(A.ICONS.ship, 56) }), h('h1', {}, 'ARGOSY'), h('p', { class: 'tag' }, t('splash.tag')), langs,
       has ? h('button', { class: 'btn go big', onClick: () => start(true) }, t('splash.continue')) : null,
-      h('button', { class: 'btn big' + (has ? ' ghost' : ' go'), onClick: () => { if (has) { R.reset(); } else R.newGame(); start(false, true); } }, t('splash.new'))));
+      h('button', { class: 'btn big' + (has ? ' ghost' : ' go'), onClick: () => { A.audio.unlock(); U.profileModal((pf) => { if (has) R.reset(); R.newGame(pf); start(false, true); }); } }, t('splash.new'))));
     document.body.append(el);
   };
   function start(load, fresh) {

@@ -109,4 +109,38 @@
   };
   AU.setOn = function (v) { AU.on = !!v; if (!v) AU.gullsStop(); };
   document.addEventListener('visibilitychange', () => { if (!AU.ctx) return; if (document.hidden) { AU.gullsStop(); AU.ctx.suspend(); } else AU.ctx.resume(); });
+
+  // ---- bowed "cello mumble" voice used for character speech (idx 0 thinnest .. 4 deepest)
+  const VOICE_F0 = [220, 174, 131, 98, 65];
+  AU.voiceStart = function (idx) {
+    if (!AU.on) return; AU.unlock(); const c = AU.ctx; if (!c) return; AU.voiceStop(true);
+    const f0 = VOICE_F0[((idx % 5) + 5) % 5]; const t0 = c.currentTime;
+    const osc = c.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = f0;
+    const lfo = c.createOscillator(); lfo.frequency.value = 5.1; const lg = c.createGain(); lg.gain.value = f0 * 0.012; lfo.connect(lg); lg.connect(osc.frequency);
+    const pre = c.createBiquadFilter(); pre.type = 'lowpass'; pre.frequency.value = 2500; osc.connect(pre);
+    const sum = c.createGain(); sum.gain.value = 1;
+    [[280, 5, 0.9], [520, 6, 0.8], [1050, 6, 0.45], [2200, 5, 0.12]].forEach((p) => { const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = p[0]; f.Q.value = p[1]; const g = c.createGain(); g.gain.value = p[2]; pre.connect(f); f.connect(g); g.connect(sum); });
+    const low = c.createBiquadFilter(); low.type = 'lowpass'; low.frequency.value = 200; const lowg = c.createGain(); lowg.gain.value = 0.25; pre.connect(low); low.connect(lowg); lowg.connect(sum);
+    const nb = c.createBuffer(1, c.sampleRate, c.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1);
+    const ns = c.createBufferSource(); ns.buffer = nb; ns.loop = true; const nf = c.createBiquadFilter(); nf.type = 'lowpass'; nf.frequency.value = 1800; const ng = c.createGain(); ng.gain.value = 0.07; ns.connect(nf); nf.connect(ng); ng.connect(sum);
+    const vg = c.createGain(); vg.gain.value = 0; sum.connect(vg);
+    const dly = c.createDelay(0.5); dly.delayTime.value = 0.11; const fb = c.createGain(); fb.gain.value = 0.28; const wet = c.createGain(); wet.gain.value = 0.22; vg.connect(dly); dly.connect(fb); fb.connect(dly); dly.connect(wet);
+    const out = c.createGain(); out.gain.value = 0.55; vg.connect(out); wet.connect(out); out.connect(AU.master);
+    osc.start(t0); lfo.start(t0); ns.start(t0);
+    const V = { osc, lfo, ns, vg, out, f0, timer: null, until: 0 };
+    const ratios = [1, 1.125, 0.89, 1.19, 0.84, 1.33, 1];
+    const note = () => {
+      const now = c.currentTime; if (now < V.until) return;
+      const dur = 0.28 + Math.random() * 0.32; const f = f0 * ratios[Math.floor(Math.random() * ratios.length)];
+      osc.frequency.cancelScheduledValues(now); osc.frequency.setValueAtTime(osc.frequency.value, now); osc.frequency.linearRampToValueAtTime(f, now + 0.18);
+      vg.gain.cancelScheduledValues(now); vg.gain.setValueAtTime(vg.gain.value, now); vg.gain.linearRampToValueAtTime(0.5, now + dur * 0.3); vg.gain.linearRampToValueAtTime(0.0, now + dur);
+      V.until = now + dur + 0.03 + Math.random() * 0.1;
+    };
+    note(); V.timer = setInterval(note, 40); AU._voice = V;
+  };
+  AU.voiceStop = function (now) {
+    const V = AU._voice; if (!V) return; AU._voice = null; clearInterval(V.timer); const c = AU.ctx, t = c.currentTime;
+    try { V.vg.gain.cancelScheduledValues(t); V.vg.gain.setValueAtTime(V.vg.gain.value, t); V.vg.gain.linearRampToValueAtTime(0, t + (now ? 0.02 : 0.12)); V.osc.stop(t + 0.3); V.lfo.stop(t + 0.3); V.ns.stop(t + 0.3); } catch (e) {}
+    setTimeout(() => { try { V.out.disconnect(); } catch (e) {} }, 900);
+  };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

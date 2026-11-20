@@ -358,7 +358,7 @@
     const res = { result: c.over, gold: 0, goods: {}, refund: 0, lostCargo: {}, prizes: c.prizes, sunk: [] };
     const sunkMine = S.ships.filter((s) => s.sunk); res.sunk = sunkMine.map((s) => s.name);
     S.ships = S.ships.filter((s) => !s.sunk);
-    S.events = S.events || []; S.loans = S.loans || []; S.captains = S.captains || []; S.tavern = S.tavern || {}; S.met = S.met || {};
+    S.profile = S.profile || { name: 'Argosy Co.', flag: 'lion' }; S.events = S.events || []; S.loans = S.loans || []; S.captains = S.captains || []; S.tavern = S.tavern || {}; S.met = S.met || {};
     S.ships.forEach((s) => { delete s.sunk; delete s._cd; delete s._cdm; delete s._side; });
     S.escortShip = null; S.escort = null;
     if (c.over === 'win') {
@@ -449,8 +449,9 @@
   };
 
   // ------------------------------------------------------------------ lifecycle
-  R.newGame = function () {
+  R.newGame = function (profile) {
     S = { v: 1, day: 1, gold: C.START_GOLD, port: 'venice', ships: [], cargo: {}, basis: {}, morale: 70, wind: { dir: rnd(0, 360), str: 1.5 }, rep: {}, market: {}, skulls: [], skullUntil: 0, insured: false, escort: null, escortShip: null, quests: [], offers: {}, offerDay: {}, nextId: 1, stats: { trades: 0, wins: 0, losses: 0, profit: 0 }, voyage: null, visited: { venice: true }, events: [], loans: [], captains: [], tavern: {}, met: {}, nextLoan: 1 };
+    S.profile = { name: String((profile && profile.name) || 'Argosy Co.').slice(0, 24), flag: (profile && profile.flag) || 'lion' };
     S.ships.push(R.mkShip('felucca', { cannons: 1 }));
     initMarket(); rollSkulls(); refreshOffers('venice'); R.save();
     return S;
