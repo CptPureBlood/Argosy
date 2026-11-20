@@ -111,7 +111,7 @@ h1, h2, h3 { margin: 0; font-weight: 700; } h3 { font-size: 17px; margin: 14px 0
 .tag { margin: 0 0 14px; color: var(--ink2); font-style: italic; } .sbox .seg { margin: 4px 0 10px; }
 
 /* combat */
-.combat { position: fixed; inset: 0; z-index: 50; background: #6f978f; display: flex; flex-direction: column; animation: fade .25s; }
+.combat { position: fixed; inset: 0; z-index: 50; background: #4f8a93; display: flex; flex-direction: column; animation: fade .25s; }
 .combatcv { flex: 1; width: 100%; min-height: 0; display: block; touch-action: none; }
 .chud { position: absolute; top: calc(env(safe-area-inset-top) + 8px); left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
 .ctitle { background: rgba(44,29,14,.8); color: #f6ecd0; padding: 5px 11px; border-radius: 14px; font-size: 14px; font-weight: 700; } .cspeed { pointer-events: auto; min-width: 48px; min-height: 40px; border: 1.5px solid #f6ecd0; background: rgba(44,29,14,.8); color: #f6ecd0; border-radius: 20px; font-size: 15px; }
@@ -119,3 +119,4 @@ h1, h2, h3 { margin: 0; font-weight: 700; } h3 { font-size: 17px; margin: 14px 0
 .cactions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); background: var(--panel2); border-top: 2px double #8a6a3b; }
 .cbtn { position: relative; overflow: hidden; min-height: 54px; border: 2px solid var(--ink); background: var(--ink); color: var(--panel); font-size: 17px; font-weight: 700; border-radius: 3px; } .cbtn.board { background: var(--acc); } .cbtn span { position: relative; z-index: 1; }
 .cbtn .cd { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: rgba(0,0,0,.45); }
+.chip svg, .gl svg, .row svg { filter: drop-shadow(0 1px 0 rgba(0,0,0,.18)); }

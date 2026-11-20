@@ -1,7 +1,7 @@
 /* Argosy – animated Mediterranean map (canvas): coast, waves, wind, skull zones, routes, ship. */
 (function (G) {
   const A = G.A, W = A.world, R = A.game, C = A.C;
-  const RAD = Math.PI / 180, YS = 1.27;
+  const RAD = Math.PI / 180, YS = 1.27, PAD = 1.6;
   const M = (A.map = { active: false, sel: null, onSelect: null, preview: null, ship: null, vAnim: null, follow: false, trail: [] });
   let cv, ctx, w = 0, h = 0, dpr = 1, time = 0, last = 0;
   const pts = new Map(); let moved = false, pinch = null;
@@ -19,16 +19,16 @@
       if (W.isLandCell(c[0], c[1])) { if (peaks.length < 120 && lat > 29.5) peaks.push([lon, lat, 0.6 + srnd() * 0.8]); }
       else if (!W.nearCoast[c[1] * W.cols + c[0]] && waves.length < 260) waves.push([lon, lat, srnd() * 6.28]);
     }
-    for (let i = 0; i < 55; i++) parts.push({ x: srnd(), y: srnd(), s: 0.5 + srnd() });
+    for (let i = 0; i < 90; i++) parts.push({ x: srnd(), y: srnd(), s: 0.5 + srnd() });
   }
 
   const proj = (lon, lat) => [w / 2 + (lon - M.cx) * M.k, h / 2 - (lat - M.cy) * M.k * YS];
   M.proj = proj;
   function clampCam() {
-    M.tk = Math.max(Math.max(7, w / (C.LON_MAX - C.LON_MIN)), Math.min(46, M.tk)); M.k = Math.max(7, Math.min(46, M.k));
+    M.tk = Math.max(Math.max(7, w / (C.LON_MAX - C.LON_MIN + 2 * PAD)), Math.min(46, M.tk)); M.k = Math.max(7, Math.min(46, M.k));
     [['cx', 'tcx'], ['cy', 'tcy']].forEach(() => {});
     const vw = w / M.k, vh = h / (M.k * YS);
-    const minX = C.LON_MIN + vw / 2, maxX = C.LON_MAX - vw / 2, minY = C.LAT_MIN + vh / 2, maxY = C.LAT_MAX - vh / 2;
+    const minX = C.LON_MIN - PAD + vw / 2, maxX = C.LON_MAX + PAD - vw / 2, minY = C.LAT_MIN - PAD * 0.6 + vh / 2, maxY = C.LAT_MAX + PAD * 0.6 - vh / 2;
     M.cx = minX > maxX ? (C.LON_MIN + C.LON_MAX) / 2 : Math.max(minX, Math.min(maxX, M.cx));
     M.cy = minY > maxY ? (C.LAT_MIN + C.LAT_MAX) / 2 : Math.max(minY, Math.min(maxY, M.cy));
   }
@@ -83,7 +83,30 @@
   M.animateVoyage = function (route, a, b, ms) { M.vAnim = { route, a, b, t: 0, ms }; };
   M.shipAt = (route, d) => { const p = W.posAt(route, d); M.ship = { lon: p.lon, lat: p.lat, heading: p.heading }; };
 
-  function polyPath(poly) { ctx.beginPath(); poly.forEach((p, i) => { const q = proj(p[0], p[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); }
+  // Organic coastline: midpoint displacement (seeded by position) + Chaikin smoothing, cached per polygon.
+  const detailCache = new Map();
+  function hash2(a, b) { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); }
+  function detail(poly) {
+    let out = detailCache.get(poly); if (out) return out;
+    let pts = poly.slice();
+    for (let lv = 0; lv < 3; lv++) {
+      const nx = [];
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length]; nx.push(a);
+        const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy); if (len < 0.18) continue;
+        const r = (hash2(a[0] + lv * 7.3, a[1] + b[0] * 1.7 + b[1]) - 0.5) * len * 0.34;
+        nx.push([(a[0] + b[0]) / 2 - (dy / len) * r, (a[1] + b[1]) / 2 + (dx / len) * r]);
+      }
+      pts = nx;
+    }
+    const sm = [];
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      sm.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    detailCache.set(poly, sm); return sm;
+  }
+  function polyPath(poly0) { const poly = detail(poly0); ctx.beginPath(); poly.forEach((p, i) => { const q = proj(p[0], p[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); }
   function icon(d, x, y, s, col, lw) { ctx.save(); ctx.translate(x - 12 * s, y - 12 * s); ctx.scale(s, s); ctx.strokeStyle = col; ctx.lineWidth = lw || 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(pathOf(d)); ctx.restore(); }
   const iconCache = {}; function pathOf(d) { return iconCache[d] || (iconCache[d] = new Path2D(d)); }
 
@@ -100,7 +123,7 @@
     ctx.strokeStyle = 'rgba(110,90,60,0.4)'; ctx.lineWidth = 1;
     waves.forEach((v) => {
       const q = proj(v[0], v[1]); if (q[0] < -10 || q[0] > w + 10 || q[1] < -10 || q[1] > h + 10) return;
-      const b = Math.sin(time * 1.4 + v[2]) * 2;
+      const ws = (R.S() ? R.S().wind.str : 1); const b = Math.sin(time * (1.2 + 0.4 * ws) + v[2]) * (1.5 + ws);
       ctx.beginPath(); ctx.moveTo(q[0] - 6, q[1]); ctx.quadraticCurveTo(q[0] - 3, q[1] - 3 + b, q[0], q[1]); ctx.quadraticCurveTo(q[0] + 3, q[1] + 3 - b, q[0] + 6, q[1]); ctx.stroke();
     });
     // land: shoreline glow, fill, outline
@@ -152,21 +175,25 @@
       if (S && S.skulls.indexOf(p.id) >= 0) { const bob = Math.sin(time * 3) * 1.5; ctx.fillStyle = 'rgba(246,236,208,0.85)'; ctx.beginPath(); ctx.arc(q[0], q[1] - 20 + bob, 9.5, 0, 6.3); ctx.fill(); icon(A.ICONS.skull, q[0], q[1] - 20 + bob, 0.62, '#8a1f14', 2.2); }
       ctx.font = '600 ' + Math.max(11, Math.min(15, M.k * 0.9)) + 'px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#2c1d0e';
       const lx = q[0] + 9, ly = q[1] + 15; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(236,220,182,0.85)'; ctx.strokeText(p.n[lang], lx, ly); ctx.fillText(p.n[lang], lx, ly);
-      if (M.k > 12 || sel) { p.p.forEach((g, i) => icon(A.GOOD_BY_ID[g].d, lx + 8 + i * 15, ly + 12, 0.56, '#5b4326', 2.2)); }
+      if (M.k > 12 || sel) { p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, lx + i * 17, ly + 3, 16, 16); }); }
     });
   }
 
   function drawWindFx() {
-    const S = R.S(); if (!S) return; const b = S.wind.dir * RAD; const dx = Math.sin(b), dy = -Math.cos(b);
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
-    parts.forEach((p) => {
-      const sp = (0.015 + 0.02 * S.wind.str) * p.s; p.x = (p.x + dx * sp * 0.2 + 1) % 1; p.y = (p.y + dy * sp * 0.2 + 1) % 1;
-      const x = p.x * w, y = p.y * h; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx * 12 * S.wind.str, y + dy * 12 * S.wind.str); ctx.stroke();
+    const S = R.S(); if (!S) return; const b = S.wind.dir * RAD; const dx = Math.sin(b), dy = -Math.cos(b); const str = S.wind.str;
+    ctx.lineCap = 'round';
+    parts.forEach((p, i) => {
+      const sp = (0.012 + 0.016 * str) * p.s; p.x = (p.x + dx * sp * 0.25 + 1) % 1; p.y = (p.y + dy * sp * 0.25 + 1) % 1;
+      const x = p.x * w, y = p.y * h, L = (14 + 10 * str) * p.s, sway = Math.sin(time * 1.6 + i) * 3;
+      const fade = Math.sin(((p.x + p.y * 1.7 + time * 0.05 * p.s) % 1) * Math.PI);
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.18 + 0.32 * fade).toFixed(2) + ')'; ctx.lineWidth = 1.2 + p.s * 0.6;
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x + dx * L * 0.5 - dy * sway, y + dy * L * 0.5 + dx * sway, x + dx * L, y + dy * L); ctx.stroke();
     });
     // wind badge
     ctx.save(); ctx.translate(36, 36); ctx.fillStyle = 'rgba(246,236,208,0.9)'; ctx.strokeStyle = '#2c1d0e'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0, 0, 22, 0, 6.3); ctx.fill(); ctx.stroke();
-    ctx.rotate(b); ctx.strokeStyle = '#8a3b24'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 12); ctx.lineTo(0, -12); ctx.moveTo(-6, -5); ctx.lineTo(0, -12); ctx.lineTo(6, -5); ctx.stroke(); ctx.restore();
-    ctx.fillStyle = '#2c1d0e'; ctx.font = '600 11px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText(A.t('wind.force', { n: Math.round(S.wind.str * 2) }), 36, 70);
+    const sw = Math.sin(time * 2.2) * 0.07 * str;
+    ctx.rotate(b + sw); ctx.strokeStyle = '#8a3b24'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 12); ctx.lineTo(0, -12); ctx.moveTo(-6, -5); ctx.lineTo(0, -12); ctx.lineTo(6, -5); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = '#2c1d0e'; ctx.font = '600 11px Georgia, serif'; ctx.textAlign = 'center'; ctx.fillText(A.t('wind.force', { n: Math.round(str * 2) }), 36, 70);
   }
 
   function drawCompass() {

@@ -165,7 +165,7 @@
   };
 
   // ------------------------------------------------------------------ voyage
-  R.moraleForDays = (d) => (d <= 2 ? -4 : d <= 4 ? 1 : d <= 8 ? 5 : d <= 11 ? 1 : -Math.round((d - 11) * 1.5));
+  R.moraleForDays = (d) => (d <= 1 ? -2 : d <= 2 ? -1 : d <= 4 ? 1 : d <= 8 ? 5 : d <= 11 ? 1 : -Math.min(5, d - 11));
   R.insuranceCost = () => Math.max(20, Math.round(R.cargoBaseValue() * C.INSURE_RATE));
   R.canDepart = () => S.port && S.ships.length > 0;
   R.startVoyage = function (toId, opts) {
@@ -232,6 +232,7 @@
     const v = S.voyage;
     const dm = R.moraleForDays(v.days);
     S.morale = clamp(S.morale + dm, 0, 100);
+    const xp = Math.min(0.4, 0.06 + 0.04 * v.days); S.ships.forEach((sh) => { sh.exp = Math.min(10, Math.round((sh.exp + xp) * 100) / 100); });
     S.port = v.to; S.voyage = null; S.insured = false; S.escort = null; S.escortShip = null;
     S.visited[S.port] = true; refreshOffers(S.port); R.save();
     return { days: v.days, dm, port: S.port };
@@ -366,9 +367,8 @@
       Object.keys(lost).forEach((g) => { res.lostCargo[g] = lost[g]; });
       S.morale = clamp(S.morale - 8, 0, 100);
     } else if (c.over === 'lose') {
-      Object.keys(S.cargo).forEach((g) => { res.lostCargo[g] = S.cargo[g]; });
-      S.cargo = {}; S.basis = {};
-      S.gold = Math.floor(S.gold * 0.5);
+      Object.keys(S.cargo).forEach((g) => { const keep = Math.floor(S.cargo[g] * 0.6); res.lostCargo[g] = S.cargo[g] - keep; if (keep > 0) S.cargo[g] = keep; else delete S.cargo[g]; });
+      S.gold = Math.floor(S.gold * 0.8);
       S.ships = [R.mkShip('felucca', { hull: 12, crew: 4, cannons: 0 })];
       S.morale = 40; S.stats.losses++;
     }

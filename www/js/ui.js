@@ -92,7 +92,7 @@
     const rows = A.GOODS.map((g) => {
       const tr = R.tier(p.id, g.id), price = R.buyPrice(p.id, g.id), have = s.cargo[g.id] || 0, pct = R.trendPct(p.id, g.id);
       return h('button', { class: 'row' + (U.good === g.id ? ' sel' : ''), onClick: () => { U.good = g.id; rerender(); } },
-        A.goodIcon(g.id, 21), h('span', { class: 'gname' }, A.name(g), tr !== 'n' ? h('i', { class: 'dot ' + tr }) : null), h('span', { class: 'have' }, have || '–'),
+        A.goodIcon(g.id, 28), h('span', { class: 'gname' }, A.name(g), tr !== 'n' ? h('i', { class: 'dot ' + tr }) : null), h('span', { class: 'have' }, have || '–'),
         h('span', { class: 'price' }, price), h('span', { class: 'pct ' + (pct > 0 ? 'up' : 'dn') }, (pct > 0 ? '▲' : '▼') + Math.abs(pct) + '%'));
     });
     return h('div', { class: 'market' }, h('div', { class: 'list' }, head, rows), tradePanel(p));

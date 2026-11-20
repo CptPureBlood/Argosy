@@ -57,13 +57,23 @@
   AU.gullsStop = function () { AU.gullOn = false; if (AU.gullTimer) { clearTimeout(AU.gullTimer); AU.gullTimer = null; } };
 
   AU.cannon = function (vol) {
-    if (!ready()) return; const c = AU.ctx, t = c.currentTime; const v = (vol || 1) * 0.28;
-    const n = c.createBufferSource(); n.buffer = noiseBuf(0.5);
-    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(90, t + 0.4);
-    const g = c.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    if (!ready()) return; const c = AU.ctx, t = c.currentTime; const v = (vol || 1) * 0.42;
+    // sharp crack
+    const n = c.createBufferSource(); n.buffer = noiseBuf(0.9);
+    const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(2600, t); f.frequency.exponentialRampToValueAtTime(140, t + 0.5);
+    const g = c.createGain(); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(v * 0.35, t + 0.08); g.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
     n.connect(f); f.connect(g); g.connect(AU.master); n.start(t);
-    const o = c.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.3);
-    const og = c.createGain(); og.gain.setValueAtTime(v * 1.2, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.32); o.connect(og); og.connect(AU.master); o.start(t); o.stop(t + 0.35);
+    // deep boom thump
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(28, t + 0.45);
+    const og = c.createGain(); og.gain.setValueAtTime(v * 1.7, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.55); o.connect(og); og.connect(AU.master); o.start(t); o.stop(t + 0.6);
+    // rolling echo over the water
+    const e = c.createBufferSource(); e.buffer = noiseBuf(1.4);
+    const ef = c.createBiquadFilter(); ef.type = 'lowpass'; ef.frequency.value = 320;
+    const eg = c.createGain(); eg.gain.setValueAtTime(0.0001, t + 0.12); eg.gain.linearRampToValueAtTime(v * 0.5, t + 0.3); eg.gain.exponentialRampToValueAtTime(0.001, t + 1.3);
+    e.connect(ef); ef.connect(eg); eg.connect(AU.master); e.start(t + 0.1);
+    // whistle of the ball in flight
+    const w = c.createOscillator(); w.type = 'sine'; w.frequency.setValueAtTime(900, t + 0.1); w.frequency.exponentialRampToValueAtTime(380, t + 1.0);
+    const wg = c.createGain(); wg.gain.setValueAtTime(0.0001, t + 0.1); wg.gain.linearRampToValueAtTime(v * 0.05, t + 0.3); wg.gain.exponentialRampToValueAtTime(0.0001, t + 1.0); w.connect(wg); wg.connect(AU.master); w.start(t + 0.1); w.stop(t + 1.05);
   };
   AU.hit = function () {
     if (!ready()) return; const c = AU.ctx, t = c.currentTime;
