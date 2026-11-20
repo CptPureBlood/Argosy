@@ -110,7 +110,21 @@
   function icon(d, x, y, s, col, lw) { ctx.save(); ctx.translate(x - 12 * s, y - 12 * s); ctx.scale(s, s); ctx.strokeStyle = col; ctx.lineWidth = lw || 1.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.stroke(pathOf(d)); ctx.restore(); }
   const iconCache = {}; function pathOf(d) { return iconCache[d] || (iconCache[d] = new Path2D(d)); }
 
+  const worldImg = new Image(); worldImg.src = 'img/world.jpg';
   function drawBase() {
+    if (worldImg.complete && worldImg.naturalWidth) { drawBaseImg(); return; }
+    drawBaseVec();
+  }
+  function drawBaseImg() {
+    ctx.fillStyle = '#1a4a63'; ctx.fillRect(0, 0, w, h);
+    const a = proj(C.LON_MIN, C.LAT_MAX), b = proj(C.LON_MAX, C.LAT_MIN); ctx.imageSmoothingEnabled = M.k < 20;
+    ctx.drawImage(worldImg, a[0], a[1], b[0] - a[0], b[1] - a[1]);
+    // soft sea sparkle (animated)
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1;
+    waves.forEach((v) => { const q = proj(v[0], v[1]); if (q[0] < -10 || q[0] > w + 10 || q[1] < -10 || q[1] > h + 10) return; const ws = (R.S() ? R.S().wind.str : 1); const bb = Math.sin(time * (1.2 + 0.4 * ws) + v[2]) * (1.5 + ws); ctx.beginPath(); ctx.moveTo(q[0] - 5, q[1]); ctx.quadraticCurveTo(q[0] - 2.5, q[1] - 2.5 + bb, q[0], q[1]); ctx.quadraticCurveTo(q[0] + 2.5, q[1] + 2.5 - bb, q[0] + 5, q[1]); ctx.stroke(); });
+    drawOverlays();
+  }
+  function drawBaseVec() {
     ctx.fillStyle = '#e4d6ad'; ctx.fillRect(0, 0, w, h);
     const gr = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.2, w / 2, h / 2, Math.max(w, h) * 0.8);
     gr.addColorStop(0, 'rgba(255,248,224,0.35)'); gr.addColorStop(1, 'rgba(120,90,40,0.22)'); ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h);
@@ -140,20 +154,23 @@
     A.WATERS.forEach((p) => { polyPath(p); ctx.stroke(); }); ctx.restore();
     // mountains
     if (M.k > 10) { ctx.strokeStyle = 'rgba(91,67,38,0.55)'; ctx.lineWidth = 1.1; peaks.forEach((v) => { const q = proj(v[0], v[1]); if (q[0] < 0 || q[0] > w || q[1] < 0 || q[1] > h) return; const s = 4 * v[2] * Math.min(1.6, M.k / 14); ctx.beginPath(); ctx.moveTo(q[0] - s, q[1] + s * 0.6); ctx.lineTo(q[0], q[1] - s * 0.6); ctx.lineTo(q[0] + s, q[1] + s * 0.6); ctx.stroke(); }); }
+    drawOverlays();
+  }
+  function drawOverlays() {
     // political map (close zoom only)
     const pol = Math.max(0, Math.min(1, (M.k - 15) / 7));
     if (pol > 0) {
       ctx.save(); ctx.globalAlpha = pol * 0.7; ctx.strokeStyle = '#6b3e1d'; ctx.lineWidth = 1.3; ctx.setLineDash([7, 4, 1.5, 4]);
       A.BORDERS.forEach((b) => { ctx.beginPath(); b.forEach((pt, i) => { const q = proj(pt[0], pt[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.stroke(); });
       ctx.setLineDash([]); ctx.globalAlpha = pol; ctx.textAlign = 'center';
-      A.COUNTRIES.forEach((c) => { const q = proj(c.lon, c.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -20 || q[1] > h + 20) return; const fs = Math.max(10, Math.min(c.big ? 22 : 16, M.k * (c.big ? 0.72 : 0.5))); ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.fillStyle = 'rgba(107,62,29,0.62)'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(228,214,173,0.55)'; const tx = c.n[A.lang] || c.n.en; ctx.strokeText(tx.toUpperCase(), q[0], q[1]); ctx.fillText(tx.toUpperCase(), q[0], q[1]); });
+      A.COUNTRIES.forEach((c) => { const q = proj(c.lon, c.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -20 || q[1] > h + 20) return; const fs = Math.max(10, Math.min(c.big ? 22 : 16, M.k * (c.big ? 0.72 : 0.5))); ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.fillStyle = worldImg.complete ? 'rgba(255,244,214,0.88)' : 'rgba(107,62,29,0.62)'; ctx.lineWidth = 3.5; ctx.strokeStyle = worldImg.complete ? 'rgba(30,18,6,0.7)' : 'rgba(228,214,173,0.55)'; const tx = c.n[A.lang] || c.n.en; ctx.strokeText(tx.toUpperCase(), q[0], q[1]); ctx.fillText(tx.toUpperCase(), q[0], q[1]); });
       ctx.restore();
     }
     // free-standing landmarks
     if (M.k > 7) { const ls = Math.max(15, Math.min(34, M.k * 1.05)); A.LANDMARKS.forEach((m) => { const q = proj(m.lon, m.lat); if (q[0] < -30 || q[0] > w + 30 || q[1] < -10 || q[1] > h + 40) return; A.drawLandmark(ctx, m.t, q[0], q[1], ls); }); }
     // sea labels
-    ctx.fillStyle = 'rgba(91,67,38,0.55)'; ctx.font = 'italic ' + Math.max(10, Math.min(22, M.k * 0.9)) + 'px Georgia, serif'; ctx.textAlign = 'center';
-    [['sea.med', 17, 34], ['sea.adriatic', 15.8, 43], ['sea.aegean', 25, 38.9], ['sea.tyrrhenian', 12, 39.8], ['sea.black', 34, 43.4], ['sea.atlantic', -7.5, 41], ['sea.red', 38.8, 19.5], ['sea.persian', 52.2, 27], ['sea.caspian', 50.8, 42], ['sea.arabian', 64, 16], ['sea.bengal', 88, 14], ['sea.indian', 80, 0], ['sea.scs', 114, 12], ['sea.andaman', 96.5, 10.5]].forEach((s2) => { const q = proj(s2[1], s2[2]); ctx.fillText(A.t(s2[0]), q[0], q[1]); });
+    ctx.fillStyle = worldImg.complete ? 'rgba(210,235,245,0.85)' : 'rgba(91,67,38,0.55)'; ctx.shadowColor = worldImg.complete ? 'rgba(5,25,40,0.9)' : 'transparent'; ctx.shadowBlur = 3; ctx.font = 'italic ' + Math.max(10, Math.min(22, M.k * 0.9)) + 'px Georgia, serif'; ctx.textAlign = 'center';
+    [['sea.med', 17, 34], ['sea.adriatic', 15.8, 43], ['sea.aegean', 25, 38.9], ['sea.tyrrhenian', 12, 39.8], ['sea.black', 34, 43.4], ['sea.atlantic', -7.5, 41], ['sea.red', 38.8, 19.5], ['sea.persian', 52.2, 27], ['sea.caspian', 50.8, 42], ['sea.arabian', 64, 16], ['sea.bengal', 88, 14], ['sea.indian', 80, 0], ['sea.scs', 114, 12], ['sea.andaman', 96.5, 10.5]].forEach((s2) => { const q = proj(s2[1], s2[2]); ctx.fillText(A.t(s2[0]), q[0], q[1]); }); ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
   }
 
   function drawDanger() {
