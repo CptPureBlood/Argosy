@@ -310,7 +310,7 @@
   function captainRow(c, hire) {
     const pk = A.PERK_BY_ID[c.perk]; const s = S();
     return h('div', { class: 'card captain rar-' + c.rar }, portrait(c.name, 52),
-      h('div', { class: 'info' }, h('b', {}, c.name), h('span', { class: 'perk' }, h('i', { class: 'rar rar-' + c.rar }, rarName(c.rar)), ' ' + A.name(pk)), h('span', { class: 'sub' }, pk.d[A.lang] || pk.d.en),
+      h('div', { class: 'info' }, h('b', {}, c.name), h('span', { class: 'perk' }, h('img', { class: 'px perkic', src: 'img/perk_' + c.perk + '.png', width: 22, height: 22, onerror: function () { this.remove(); } }), h('i', { class: 'rar rar-' + c.rar }, rarName(c.rar)), ' ' + A.name(pk)), h('span', { class: 'sub' }, pk.d[A.lang] || pk.d.en),
         h('span', { class: 'sub' }, hire ? t('tavern.cost', { f: A.fmt(c.fee), w: c.wage }) : t('tavern.wage', { w: c.wage }))),
       hire ? h('button', { class: 'btn sm', disabled: s.gold < c.fee || s.captains.length >= R.captainSlots(), onClick: () => { if (R.hireCaptain(c.id)) { A.audio.coin(); A.toast(t('tavern.hired', { n: c.name })); } rerender(); } }, t('tavern.hire'))
         : h('button', { class: 'btn sm ghost', onClick: () => { R.dismissCaptain(c.id); rerender(); } }, t('tavern.dismiss')));

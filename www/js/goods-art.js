@@ -21,9 +21,10 @@
   const cache = {};
   A.goodSvg = (id, size) => '<svg viewBox="0 0 24 24" width="' + (size || 18) + '" height="' + (size || 18) + '" aria-hidden="true">' + (A.GOOD_ART[id] || '') + '</svg>';
   // Canvas image (async decode, cached). Returns an Image; check .complete.
+  A.img = function (n) { A._ic = A._ic || {}; if (!A._ic[n]) { const i = new Image(); i.src = 'img/' + n + '.png'; A._ic[n] = i; } return A._ic[n]; };
   A.goodImg = function (id) {
     if (cache[id]) return cache[id];
-    const img = new Image(); img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">' + A.GOOD_ART[id] + '</svg>');
+    const img = new Image(); if (id !== 'oil') { img.src = 'img/' + id + '.png'; return (cache[id] = img); } if (id === 'oil') { img.src = 'img/glass.png'; return (cache[id] = img); } img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">' + A.GOOD_ART[id] + '</svg>');
     return (cache[id] = img);
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

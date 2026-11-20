@@ -174,6 +174,10 @@
     ctx.restore();
   }
 
+  function drawGulls() {
+    const g = A.img('ev_gull'); if (!g.complete || !g.naturalWidth) return; ctx.imageSmoothingEnabled = false;
+    for (let i = 0; i < 4; i++) { const sp = 14 + i * 5, x = ((time * sp + i * 173) % (w + 80)) - 40, y = h * (0.15 + i * 0.2) + Math.sin(time * 1.3 + i * 2) * 10, fl = 1 + Math.sin(time * 9 + i) * 0.35; ctx.globalAlpha = 0.85; ctx.drawImage(g, x, y - 7 * fl, 18, 14 * fl); ctx.globalAlpha = 1; }
+  }
   function drawPorts() {
     const S = R.S(); const lang = A.lang; const placed = []; const fs = Math.max(10, Math.min(15, M.k * 0.9)); const lm = Math.max(16, Math.min(32, M.k * 1.0));
     const order = A.PORTS.slice().sort((a, b) => (b.id === M.sel ? 2 : 0) + (S && S.port === b.id ? 1 : 0) - ((a.id === M.sel ? 2 : 0) + (S && S.port === a.id ? 1 : 0)) || (b.yard ? 1 : 0) - (a.yard ? 1 : 0));
@@ -196,8 +200,9 @@
       if (sel) { ctx.strokeStyle = 'rgba(138,59,36,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q[0], q[1], 11 + Math.sin(time * 4) * 2, 0, 6.3); ctx.stroke(); }
       ctx.fillStyle = here ? '#8a3b24' : '#f6ecd0'; ctx.strokeStyle = '#2c1d0e'; ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.arc(q[0], q[1], 5.5, 0, 6.3); ctx.fill(); ctx.stroke();
-      if (p.yard) icon(A.ICONS.anchor, q[0] + 11, q[1] - 11, 0.62, '#2c1d0e', 2.4);
-      if (S && S.skulls.indexOf(p.id) >= 0) { const bob = Math.sin(time * 3) * 1.5; ctx.fillStyle = 'rgba(246,236,208,0.85)'; ctx.beginPath(); ctx.arc(q[0], q[1] - 20 + bob, 9.5, 0, 6.3); ctx.fill(); icon(A.ICONS.skull, q[0], q[1] - 20 + bob, 0.62, '#8a1f14', 2.2); }
+      if (p.yard) { const ya = A.img('bd_yard'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; ctx.drawImage(ya, q[0] + 6, q[1] - 22 + Math.sin(time * 2 + p.lon) * 1.2, 16, 16); } else icon(A.ICONS.anchor, q[0] + 11, q[1] - 11, 0.62, '#2c1d0e', 2.4); }
+      if (here) { const fl = A.img('mk_flag'); if (fl.complete && fl.naturalWidth) { ctx.imageSmoothingEnabled = false; const fw = 20, fh = fw * fl.naturalHeight / fl.naturalWidth, rr = 18; for (let r = 0; r < rr; r++) { const dx = Math.sin(time * 5 + r * 0.45) * 1.6 * (r / rr); ctx.drawImage(fl, 0, r * fl.naturalHeight / rr, fl.naturalWidth, fl.naturalHeight / rr + 0.5, q[0] - 3 + dx, q[1] - 6 - fh + r * fh / rr, fw, fh / rr + 0.5); } } }
+      if (S && S.skulls.indexOf(p.id) >= 0) { const bob = Math.sin(time * 3) * 1.5; const sk = A.img('mk_skull'); if (sk.complete && sk.naturalWidth) { ctx.imageSmoothingEnabled = false; const ps = 18 + Math.sin(time * 4) * 1.5; ctx.drawImage(sk, q[0] - ps / 2, q[1] - 20 + bob - ps / 2, ps, ps); } else { ctx.fillStyle = 'rgba(246,236,208,0.85)'; ctx.beginPath(); ctx.arc(q[0], q[1] - 20 + bob, 9.5, 0, 6.3); ctx.fill(); icon(A.ICONS.skull, q[0], q[1] - 20 + bob, 0.62, '#8a1f14', 2.2); } }
       if (spot) {
         ctx.font = '600 ' + fs + 'px Georgia, serif'; ctx.textAlign = 'left'; ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + 5, spot[1] + fs);
         if (d.showGoods) p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, spot[0] + 3 + i * 17, spot[1] + fs + 5, 16, 16); });
@@ -258,6 +263,6 @@
     const S = R.S();
     if (S && S.voyage) { const r = W.route(S.voyage.from, S.voyage.to); const trv = M.vAnim ? M.vAnim.a + (M.vAnim.b - M.vAnim.a) * Math.min(1, M.vAnim.t / M.vAnim.ms) : S.voyage.travelled; drawRoute(r, trv, false); }
     else if (M.preview) drawRoute(M.preview, 0, true);
-    drawWindFx(); drawPorts(); drawShip(); drawCompass();
+    drawWindFx(); drawGulls(); drawPorts(); drawShip(); drawCompass();
   }
 })(typeof globalThis !== 'undefined' ? globalThis : window);
