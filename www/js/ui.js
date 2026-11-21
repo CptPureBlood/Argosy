@@ -72,7 +72,7 @@
   function renderPort() {
     const s = S(), p = A.port(s.port);
     const skull = s.skulls.indexOf(p.id) >= 0;
-    const REG = { tripoli: 'arab', alexandria: 'arab', beirut: 'arab', jeddah: 'arab', aden: 'arab', hormuz: 'arab', calicut: 'india', colombo: 'india', malacca: 'sea', ayutthaya: 'sea', manila: 'sea', canton: 'china' };
+    const REG = { tripoli: 'arab', alexandria: 'arab', beirut: 'arab', jeddah: 'arab', aden: 'arab', hormuz: 'arab', calicut: 'india', colombo: 'india', malacca: 'sea', ayutthaya: 'sea', manila: 'sea', canton: 'china', algiers: 'arab', muscat: 'arab', masulipatnam: 'india', diu: 'india' };
     const head = h('div', { class: 'phead' },
       h('div', { class: 'pbanner', style: { backgroundImage: 'url(img/port_' + (REG[p.id] || 'med') + '.jpg)' } }),
       h('div', { class: 'pname' }, h('h1', {}, A.name(p)), p.yard ? h('span', { class: 'badge' }, A.icon('anchor', 15), t('yard.badge')) : null, skull ? h('span', { class: 'badge bad' }, A.icon('skull', 15), t('port.pirates')) : null),

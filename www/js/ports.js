@@ -22,6 +22,10 @@
     P('malacca', 102.25, 2.2, 'Malacca', 'Malaka', ['spice', 'silk', 'timber'], ['iron', 'wine', 'cloth'], 1, 'lighthouse'),
     P('ayutthaya', 100.5, 13.4, 'Ayutthaya', 'Ayutthaya', ['wheat', 'timber', 'spice'], ['iron', 'cloth', 'wine'], 0, 'prang'),
     P('manila', 120.75, 14.58, 'Manila', 'Manila', ['silk', 'gems', 'fish'], ['iron', 'cloth', 'wine']),
+    P('algiers', 3.06, 36.77, 'Algiers', 'Cezayir', ['wheat', 'wool', 'salt'], ['cloth', 'iron', 'glass'], 0, 'fort'),
+    P('muscat', 58.6, 23.6, 'Muscat', 'Maskat', ['salt', 'fish', 'gems'], ['wheat', 'timber', 'cloth'], 0, 'fort'),
+    P('masulipatnam', 81.15, 16.2, 'Masulipatnam', 'Masulipatnam', ['cloth', 'spice', 'wheat'], ['wine', 'iron', 'glass']),
+    P('diu', 71.0, 20.7, 'Diu', 'Diu', ['cloth', 'spice', 'salt'], ['wine', 'iron', 'timber'], 0, 'fort'),
     P('canton', 113.5, 22.3, 'Canton', 'Kanton', ['silk', 'cloth', 'iron'], ['spice', 'wine', 'wool'], 0, 'pagoda'),
   ];
   // Landmarks that stand alone on the map (not tied to a port). t = drawing type.

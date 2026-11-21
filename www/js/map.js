@@ -239,7 +239,7 @@
         : [[q[0] + 11, q[1] - bh / 2], [q[0] - bwid - 11, q[1] - bh / 2], [q[0] - bwid / 2, q[1] + 11], [q[0] - bwid / 2, q[1] - bh - 11], [q[0] + 11, q[1] - bh - 6], [q[0] + 11, q[1] + 4], [q[0] - bwid - 11, q[1] - bh - 6], [q[0] - bwid - 11, q[1] + 4]];
       let spot = null;
       if (wantLabel) {
-        for (const c of cand) { const r = [c[0], c[1], bwid, bh]; if (sel && (r[0] < 4 || r[0] + bwid > w - 4 || r[1] < 4 || r[1] + bh > h - 4)) continue; if (!placed.some((o) => r[0] < o[0] + o[2] && r[0] + r[2] > o[0] && r[1] < o[1] + o[3] && r[1] + r[3] > o[1])) { spot = r; break; } }
+        for (const c of cand) { const r = [c[0], c[1], bwid, bh]; if (r[0] < 4 || r[0] + bwid > w - 4 || r[1] < 4 || r[1] + bh > h - 4) continue; if (!placed.some((o) => r[0] < o[0] + o[2] && r[0] + r[2] > o[0] && r[1] < o[1] + o[3] && r[1] + r[3] > o[1])) { spot = r; break; } }
         if (!spot && sel) spot = [cand[0][0], cand[0][1], bwid, bh];
         if (spot) placed.push(spot);
       }
@@ -258,7 +258,7 @@
       ctx.beginPath(); ctx.arc(q[0], q[1], 8.5, 0, 6.3); ctx.fillStyle = 'rgba(20,12,4,0.45)'; ctx.fill(); ctx.fillStyle = here ? '#8a3b24' : '#f6ecd0'; ctx.beginPath(); ctx.arc(q[0], q[1], 6, 0, 6.3); ctx.fill(); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(q[0], q[1], 8.5, 0, 6.3); ctx.stroke();
       if (here) { const fl = A.img('mk_flag'); if (fl.complete && fl.naturalWidth) { ctx.imageSmoothingEnabled = false; const fw = 20, fh = fw * fl.naturalHeight / fl.naturalWidth, rr = 18; for (let r = 0; r < rr; r++) { const dx = Math.sin(time * 5 + r * 0.45) * 1.6 * (r / rr); ctx.drawImage(fl, 0, r * fl.naturalHeight / rr, fl.naturalWidth, fl.naturalHeight / rr + 0.5, q[0] - 3 + dx, q[1] - 6 - fh + r * fh / rr, fw, fh / rr + 0.5); } } }
       if (spot) {
-        ctx.font = fs + 'px "Special Elite", Georgia, serif'; ctx.textAlign = 'left'; if (!sel) { ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(246,238,214,0.97)'; ctx.strokeText(d.name, spot[0] + 3, spot[1] + fs); } ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + (sel ? 5 : 3), spot[1] + fs); if (p.yard) { const ya = A.img('ui_anchor'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; const ah = fs + 1, aw = ah * ya.naturalWidth / ya.naturalHeight; ctx.drawImage(ya, spot[0] + (sel ? 8 : 6) + ctx.measureText(d.name).width, spot[1] + 1, aw, ah); } }
+        ctx.font = fs + 'px "Special Elite", Georgia, serif'; ctx.textAlign = 'left'; if (!sel) { const pt = A.img('label_parch'); if (pt.complete && pt.naturalWidth) { ctx.imageSmoothingEnabled = false; ctx.drawImage(pt, spot[0] - 4, spot[1] - 2, spot[2] + 8, spot[3] + 4); } else { ctx.fillStyle = 'rgba(240,226,190,0.9)'; ctx.strokeStyle = 'rgba(110,78,40,0.85)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(spot[0] - 1, spot[1], spot[2] + 2, spot[3], 3); ctx.fill(); ctx.stroke(); } } ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + (sel ? 5 : 3), spot[1] + fs); if (p.yard) { const ya = A.img('ui_anchor'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; const ah = fs + 1, aw = ah * ya.naturalWidth / ya.naturalHeight; ctx.drawImage(ya, spot[0] + (sel ? 8 : 6) + ctx.measureText(d.name).width, spot[1] + 1, aw, ah); } }
         if (d.showGoods) p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, spot[0] + 3 + i * 17, spot[1] + fs + 5, 16, 16); });
       }
     });
