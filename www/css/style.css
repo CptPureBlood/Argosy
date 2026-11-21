@@ -178,3 +178,13 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 .modal.intro .mtop{display:flex;gap:10px;align-items:center}.modal.intro .mustafa{width:64px;height:64px;object-fit:cover;border:2px solid #3b2a17;background:#d9c79a}
 .modal.intro .info{display:flex;flex-direction:column}
 .modal.intro .bubble{min-height:7.2em}
+/* ornate image buttons */
+.btn { border: 14px solid transparent !important; border-image: url(../img/btn_wood.png) 34 fill / 14px stretch !important; background: none !important; box-shadow: none !important; min-height: 50px; padding: 0 6px; color: #f6e8c4; text-shadow: 0 1px 0 #0008; transition: transform .08s, filter .08s; }
+.btn.go, .btn.buy, .btn.danger { border-image-source: url(../img/btn_red.png) !important; }
+.btn.ghost { border-image-source: url(../img/btn_parch.png) !important; color: #3b2a17; text-shadow: none; }
+.btn:disabled { opacity: 1; filter: none; border-image-source: url(../img/btn_wood_d.png) !important; color: #b9ab8c; }
+.btn.go:disabled, .btn.buy:disabled, .btn.danger:disabled { border-image-source: url(../img/btn_red_d.png) !important; }
+.btn.ghost:disabled { border-image-source: url(../img/btn_parch_d.png) !important; color: #8a7d62; }
+.btn:active:not(:disabled) { transform: translateY(2px) scale(.985); filter: brightness(.82); }
+.btn.sm { min-height: 44px; font-size: 13.5px; } .btn.big { min-height: 58px; }
+.xbtn { border: 0 !important; background: url(../img/btn_x.png) center/contain no-repeat !important; color: transparent !important; width: 34px; height: 32px; border-radius: 0 !important; font-size: 0 !important; }
