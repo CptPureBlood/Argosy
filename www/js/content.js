@@ -128,22 +128,9 @@
   };
 
   // ---------- Flags (player ship banner)
-  A.FLAGS = [
-    { id: 'lion', bg: '#b3261e', fg: '#f2c14e' }, { id: 'eagle', bg: '#1f2a44', fg: '#f2ead8' }, { id: 'cross', bg: '#f2ead8', fg: '#b3261e' }, { id: 'crescent', bg: '#2f6a5a', fg: '#f2ead8' },
-    { id: 'star', bg: '#2a4a8a', fg: '#f2c14e' }, { id: 'anchor', bg: '#f2ead8', fg: '#1f2a44' }, { id: 'tower', bg: '#6a2a4a', fg: '#f2ead8' }, { id: 'sun', bg: '#f2c14e', fg: '#8a3b24' },
-  ];
-  const FSYM = {
-    lion: '<circle cx="20" cy="18" r="11" fill="FG"/><circle cx="20" cy="19" r="6.5" fill="BG"/><circle cx="17.5" cy="17.5" r="1.2" fill="FG"/><circle cx="22.5" cy="17.5" r="1.2" fill="FG"/><path d="M18 21.5h4l-2 2.5z" fill="FG"/>',
-    eagle: '<path d="M6 14l10 4 4-6 4 6 10-4-4 10-8 2v6h-4v-6l-8-2z" fill="FG"/>',
-    cross: '<path d="M17 6h6v10h10v6H23v12h-6V22H7v-6h10z" fill="FG"/>',
-    crescent: '<path d="M23 8a11 11 0 1 0 0 20a8.5 8.5 0 1 1 0-20z" fill="FG"/><path d="M29 14l1.4 3 3.2.3-2.4 2.1.8 3.1-3-1.7-3 1.7.8-3.1-2.4-2.1 3.2-.3z" fill="FG"/>',
-    star: '<path d="M20 7l3.4 8.2 8.8.7-6.7 5.7 2.1 8.6L20 25.5 12.4 30.2l2.1-8.6-6.7-5.7 8.8-.7z" fill="FG"/>',
-    anchor: '<circle cx="20" cy="10" r="3" fill="none" stroke="FG" stroke-width="2"/><path d="M20 13v20M12 20h16M10 26c1 6 6 8 10 8s9-2 10-8" fill="none" stroke="FG" stroke-width="2.4"/>',
-    tower: '<path d="M12 34V14h4v4h3v-4h2v4h3v-4h4v20zM18 34v-8h4v8z" fill="FG"/>',
-    sun: '<circle cx="20" cy="20" r="7" fill="FG"/><path d="M20 4v6M20 30v6M4 20h6M30 20h6M9 9l4 4M27 27l4 4M31 9l-4 4M13 27l-4 4" stroke="FG" stroke-width="2.4"/>',
-  };
+  A.FLAGS = ['lion', 'crescent', 'eagle', 'anchor', 'lotus', 'dragon', 'sun', 'tiger', 'keys', 'wheel', 'palm', 'shell'].map((id) => ({ id }));
   A.flagSvg = function (id, w) {
-    const f = A.FLAGS.find((x) => x.id === id) || A.FLAGS[0]; const h = Math.round((w || 40) * 0.7);
-    return `<svg viewBox="0 0 40 28" width="${w || 40}" height="${h}" aria-hidden="true"><path d="M1 2 Q10 -1 20 2 T39 2 V26 Q30 29 20 26 T1 26Z" fill="${f.bg}" stroke="#3b2a17" stroke-width="1.6"/><g transform="translate(0 -3) scale(1 .98)">${FSYM[f.id].replace(/FG/g, f.fg).replace(/BG/g, f.bg)}</g></svg>`;
+    const f = A.FLAGS.find((x) => x.id === id) || A.FLAGS[0];
+    return '<img class="flagimg" src="img/flag_' + f.id + '.png" style="height:' + Math.round((w || 40) * 1.15) + 'px;width:auto" alt="">';
   };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
