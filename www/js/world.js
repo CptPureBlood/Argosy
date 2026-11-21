@@ -67,6 +67,7 @@
           if (lon < bb[0] || lon > bb[1] || lat < bb[2] || lat > bb[3]) continue;
           if (inPoly(lon, lat, polys[k])) isLand = true;
         }
+        if (!isLand && lat > 47.5 && lon > -4) isLand = true;
         if (isLand) for (const wp of A.WATERS) { if (inPoly(lon, lat, wp)) { isLand = false; break; } }
         if (isLand) {
           for (const ch of A.CHANNELS) {

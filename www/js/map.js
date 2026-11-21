@@ -1,7 +1,7 @@
 /* Mare Nostrum – animated Mediterranean map (canvas): coast, waves, wind, skull zones, routes, ship. */
 (function (G) {
   const A = G.A, W = A.world, R = A.game, C = A.C;
-  const RAD = Math.PI / 180, YS = 1.27, PAD = 0, PADY = 0, CAM_LAT_MIN = -1.2, FAR_K = 14, FAKE_LAT = 10.8, FAKE_LON = 41.5;
+  const RAD = Math.PI / 180, YS = 1.27, PAD = 0, PADY = 0, CAM_LAT_MIN = -4, FAR_K = 14, FAKE_LAT = 10.8, FAKE_LON = 41.5;
   const M = (A.map = { active: false, sel: null, onSelect: null, preview: null, ship: null, vAnim: null, follow: false, trail: [] });
   let cv, ctx, w = 0, h = 0, dpr = 1, time = 0, last = 0;
   const pts = new Map(); let moved = false, pinch = null;

@@ -61,7 +61,7 @@
   A.C = {
     MAX_FLEET: 6, START_GOLD: 600, NM_PER_KNOT_DAY: 19.2, SAVE_KEY: 'marenostrum_save_v2', LANG_KEY: 'marenostrum_lang',
     UPKEEP_PER_CREW: 0.35, REPAIR_PER_HULL: 2.2, CREW_COST: 20, CANNON_COST: 140, INSURE_RATE: 0.04, INSURE_PAYOUT: 0.75,
-    LON_MIN: -10, LON_MAX: 125, LAT_MIN: -9.5, LAT_MAX: 47.5, GRID: 0.25,
+    LON_MIN: -9.25, LON_MAX: 122.67, LAT_MIN: -9.35, LAT_MAX: 51.18, GRID: 0.25,
   };
 
 })(typeof globalThis !== 'undefined' ? globalThis : window);
