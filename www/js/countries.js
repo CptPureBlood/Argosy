@@ -1,4 +1,4 @@
-/* Argosy – political map c.1500 (approximate borders and realm names, shown at close zoom). */
+/* Mare Nostrum – political map c.1500 (approximate borders and realm names, shown at close zoom). */
 (function (G) {
   const A = (G.A = G.A || {});
   const L = (en, tr, lon, lat, big) => ({ n: { en, tr }, lon, lat, big: !!big });

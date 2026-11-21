@@ -1,4 +1,4 @@
-/* Argosy – static game data (goods, ports, ship types, coastline). No DOM access here. */
+/* Mare Nostrum – static game data (goods, ports, ship types, coastline). No DOM access here. */
 (function (G) {
   const A = (G.A = G.A || {});
 
@@ -59,7 +59,7 @@
   A.PIRATE_NAMES = ['Black Gull', 'Red Corsair', 'Sea Wolf', 'Barbary Rose', 'Night Heron', 'Sable Fox', 'Iron Tide', 'Crimson Crab'];
 
   A.C = {
-    MAX_FLEET: 6, START_GOLD: 600, NM_PER_KNOT_DAY: 19.2, SAVE_KEY: 'argosy_save_v2', LANG_KEY: 'argosy_lang',
+    MAX_FLEET: 6, START_GOLD: 600, NM_PER_KNOT_DAY: 19.2, SAVE_KEY: 'marenostrum_save_v2', LANG_KEY: 'marenostrum_lang',
     UPKEEP_PER_CREW: 0.35, REPAIR_PER_HULL: 2.2, CREW_COST: 20, CANNON_COST: 140, INSURE_RATE: 0.04, INSURE_PAYOUT: 0.75,
     LON_MIN: -10, LON_MAX: 125, LAT_MIN: -9.5, LAT_MAX: 47.5, GRID: 0.25,
   };

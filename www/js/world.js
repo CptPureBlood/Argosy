@@ -1,4 +1,4 @@
-/* Argosy – world geometry: land mask from coastline polygons, sea routing (A*), distance helpers. */
+/* Mare Nostrum – world geometry: land mask from coastline polygons, sea routing (A*), distance helpers. */
 (function (G) {
   const A = G.A;
   const C = A.C;

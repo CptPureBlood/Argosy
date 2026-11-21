@@ -1,4 +1,4 @@
-/* Argosy – semi-automatic naval combat scene (canvas). Cannons fire on their own cooldowns; the player can board or flee. */
+/* Mare Nostrum – semi-automatic naval combat scene (canvas). Cannons fire on their own cooldowns; the player can board or flee. */
 (function (G) {
   const A = G.A, R = A.game, h = A.h, t = A.t;
   const K = (A.combat = {});
@@ -128,11 +128,11 @@
   }
 
   let bgName = null; const BGS = ['bg_day1', 'bg_day2', 'bg_night1', 'bg_night2', 'bg_storm1', 'bg_storm2'];
-  const bgImg = () => { if (!bgName) { const S0 = R.S(); const st = S0 ? S0.wind.str : 1; const r = Math.random(); const kind = st > 2.2 || r < 0.14 ? 'storm' : r < 0.42 ? 'night' : 'day'; bgName = 'bg_' + kind + (1 + Math.floor(Math.random() * 2)); } const i = (bgCache[bgName] = bgCache[bgName] || Object.assign(new Image(), { src: 'img/' + bgName + '.jpg' })); return i; }; const bgCache = {};
+  const bgImg = () => { if (!bgName) { const S0 = R.S(); const st = S0 ? S0.wind.str : 1; const r = Math.random(); const kind = st > 2.2 || r < 0.14 ? 'storm' : r < 0.42 ? 'night' : 'day'; bgName = 'bg_' + kind + (1 + Math.floor(Math.random() * 2)); } const i = (bgCache[bgName] = bgCache[bgName] || Object.assign(new Image(), { src: 'img/' + bgName + '.jpg' })); return i; }; const bgCache = {}, bgPix = {};
   function draw() {
     ctx.save(); ctx.clearRect(0, 0, w, hh);
     if (shake > 0) ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5);
-    { const bi = bgImg(); if (bi.complete && bi.naturalWidth) { const sc = Math.max(w / bi.naturalWidth, hh / bi.naturalHeight), bw2 = bi.naturalWidth * sc, bh2 = bi.naturalHeight * sc; ctx.drawImage(bi, (w - bw2) / 2, (hh - bh2) / 2 + Math.sin(time * 0.6) * 3, bw2, bh2); } else { ctx.fillStyle = '#3d737f'; ctx.fillRect(-10, -10, w + 20, hh + 20); } }
+    { const bi = bgImg(); if (bi.complete && bi.naturalWidth) { const key = bgName + w + 'x' + hh; if (!bgPix.c || bgPix.k !== key) { const pw = Math.max(90, Math.round(w / 3.2)), ph = Math.round(pw * hh / w); const cv = document.createElement('canvas'); cv.width = pw; cv.height = ph; const cx2 = cv.getContext('2d'); const sc = Math.max(pw / bi.naturalWidth, ph / bi.naturalHeight); cx2.imageSmoothingQuality = 'high'; cx2.drawImage(bi, (pw - bi.naturalWidth * sc) / 2, (ph - bi.naturalHeight * sc) / 2, bi.naturalWidth * sc, bi.naturalHeight * sc); const id = cx2.getImageData(0, 0, pw, ph), d = id.data; for (let i = 0; i < d.length; i += 4) { const gr = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; d[i] = Math.round((d[i] * 0.72 + gr * 0.28) / 24) * 24 * 0.92; d[i + 1] = Math.round((d[i + 1] * 0.72 + gr * 0.28) / 24) * 24 * 0.92; d[i + 2] = Math.round((d[i + 2] * 0.72 + gr * 0.28) / 24) * 24 * 0.95; } cx2.putImageData(id, 0, 0); bgPix.c = cv; bgPix.k = key; } ctx.imageSmoothingEnabled = false; ctx.drawImage(bgPix.c, 0, Math.sin(time * 0.6) * 2 - 2, w, hh + 4); ctx.imageSmoothingEnabled = true; const vg = ctx.createRadialGradient(w / 2, hh / 2, Math.min(w, hh) * 0.35, w / 2, hh / 2, Math.max(w, hh) * 0.75); vg.addColorStop(0, 'rgba(8,24,36,0)'); vg.addColorStop(1, 'rgba(8,24,36,0.38)'); ctx.fillStyle = vg; ctx.fillRect(0, 0, w, hh); } else { ctx.fillStyle = '#3d737f'; ctx.fillRect(-10, -10, w + 20, hh + 20); } }
     // swell bands + streaks scrolling downwards (ships sail up)
     const S = R.S(); const ws = S ? S.wind.str : 1; A.windStr = ws;
     ctx.fillStyle = 'rgba(255,255,255,0.05)'; for (let i = 0; i < 6; i++) { const y = ((time * 14 + i * hh / 6) % (hh + 80)) - 40; ctx.beginPath(); for (let x = 0; x <= w; x += 12) { const yy = y + Math.sin(x * 0.03 + i) * 10; x ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy); } for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, y + 28 + Math.sin(x * 0.03 + i + 1) * 10); ctx.closePath(); ctx.fill(); }
@@ -142,7 +142,7 @@
     all.forEach((s) => {
       const p = pos[s.id], v = vis[s.id]; if (v.sink >= 1) return;
       const hp = v.hull / (v.max || A.SHIPS[s.type].hull); const sk = (v.shk || 0) * Math.sin(time * 60) * p.wd * 0.025;
-      ctx.fillStyle = 'rgba(10,40,50,0.28)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + 3, p.wd * 0.46, p.hg * 0.06, 0, 0, 6.3); ctx.fill();
+      ctx.fillStyle = 'rgba(6,24,34,0.42)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + 4, p.wd * 0.5, p.hg * 0.075, 0, 0, 6.3); ctx.fill(); ctx.fillStyle = 'rgba(240,250,255,0.5)'; for (let k = -3; k <= 3; k++) { const fx2 = p.x + k * p.wd * 0.13, wob = Math.sin(time * 3 + k * 1.7) * 1.5; ctx.fillRect(Math.round(fx2 - 3), Math.round(p.y + 1 + wob + Math.abs(k) * 0.8), 6, 2); }
       A.drawShip(ctx, p.x, p.y, p.hg * 0.9, s.type, { side: s._side, dir: p.dir, time, phase: v.phase, sink: v.sink, hullPct: hp, px: p.px, shakeX: sk });
       if (v.flash > 0) { ctx.globalAlpha = v.flash * 0.35; ctx.fillStyle = '#fff'; ctx.fillRect(p.x - p.wd * 0.4, p.y - p.hg * 0.6, p.wd * 0.8, p.hg * 0.5); ctx.globalAlpha = 1; }
       if (!v.sinking) {

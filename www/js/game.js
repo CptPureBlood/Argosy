@@ -1,4 +1,4 @@
-/* Argosy – game rules and state (no DOM). Everything the UI needs is exposed on A.game. */
+/* Mare Nostrum – game rules and state (no DOM). Everything the UI needs is exposed on A.game. */
 (function (G) {
   const A = G.A, C = A.C;
   const RAD = Math.PI / 180;

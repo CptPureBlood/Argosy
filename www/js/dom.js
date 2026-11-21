@@ -1,4 +1,4 @@
-/* Argosy – tiny DOM helpers. */
+/* Mare Nostrum – tiny DOM helpers. */
 (function (G) {
   const A = G.A;
   A.h = function (tag, props) {

@@ -1,4 +1,4 @@
-/* Argosy – the 20 ports (c.1500). p = produces (cheap here), d = demands (dear here). lm = landmark drawn beside the port. */
+/* Mare Nostrum – the 20 ports (c.1500). p = produces (cheap here), d = demands (dear here). lm = landmark drawn beside the port. */
 (function (G) {
   const A = (G.A = G.A || {});
   const P = (id, lon, lat, en, tr, p, d, yard, lm) => ({ id, lon, lat, yard: !!yard, n: { en, tr }, p, d, lm });

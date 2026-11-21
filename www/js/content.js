@@ -1,4 +1,4 @@
-/* Argosy – content: price events, captain perks, port mayors (fictional characters inspired by each realm, c.1500). */
+/* Mare Nostrum – content: price events, captain perks, port mayors (fictional characters inspired by each realm, c.1500). */
 (function (G) {
   const A = (G.A = G.A || {});
 

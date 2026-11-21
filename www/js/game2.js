@@ -1,4 +1,4 @@
-/* Argosy – price events, mayors, loans, tavern captains and perks (extends A.game). */
+/* Mare Nostrum – price events, mayors, loans, tavern captains and perks (extends A.game). */
 (function (G) {
   const A = G.A, R = A.game, C = A.C;
   const rnd = A.rnd, ri = A.ri, clamp = A.clamp, pick = A.pick;

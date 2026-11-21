@@ -1,4 +1,4 @@
-/* Argosy – coloured trade-good illustrations (24x24 SVG fragments). Each good has its own colour and silhouette. */
+/* Mare Nostrum – coloured trade-good illustrations (24x24 SVG fragments). Each good has its own colour and silhouette. */
 (function (G) {
   const A = (G.A = G.A || {});
   const o = 'stroke="#3b2a17" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"';

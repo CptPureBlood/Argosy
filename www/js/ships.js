@@ -1,4 +1,4 @@
-/* Argosy – procedural ship drawing (side view) shared by map, combat and fleet screens. */
+/* Mare Nostrum – procedural ship drawing (side view) shared by map, combat and fleet screens. */
 (function (G) {
   const A = G.A;
 

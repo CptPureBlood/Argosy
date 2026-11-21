@@ -1,4 +1,4 @@
-/* Argosy – headless logic tests: routing, economy, wind, voyage, combat, shipyard, save/load, i18n coverage. */
+/* Mare Nostrum – headless logic tests: routing, economy, wind, voyage, combat, shipyard, save/load, i18n coverage. */
 'use strict';
 const fs = require('fs');
 const path = require('path');

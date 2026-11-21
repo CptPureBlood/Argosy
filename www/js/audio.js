@@ -1,4 +1,4 @@
-/* Argosy – procedural audio (Web Audio): small harbour gong, distant gulls, cannon, hit, coin. No asset files. */
+/* Mare Nostrum – procedural audio (Web Audio): small harbour gong, distant gulls, cannon, hit, coin. No asset files. */
 (function (G) {
   const A = G.A;
   const AU = (A.audio = { on: true, ctx: null, gullTimer: null, gullOn: false });

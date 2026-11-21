@@ -1,4 +1,4 @@
-/* Argosy – screens, navigation, voyage controller, encounters and results. */
+/* Mare Nostrum – screens, navigation, voyage controller, encounters and results. */
 (function (G) {
   const A = G.A, R = A.game, W = A.world, C = A.C, h = A.h, t = A.t;
   const U = (A.ui = { screen: 'port', tab: 'market', good: null, qty: 5, sel: null, insure: false, scroll: 0 });
@@ -484,7 +484,7 @@
     const s = S();
     return h('div', { class: 'scr list pad' },
       h('h3', {}, t('menu.language')), h('div', { class: 'seg' }, ['en', 'tr'].map((l) => h('button', { class: A.lang === l ? 'on' : '', onClick: () => { A.setLang(l); U.renderNav(); rerender(); } }, l === 'en' ? 'English' : 'Türkçe'))),
-      h('h3', {}, t('menu.sound')), h('div', { class: 'seg' }, h('button', { class: A.audio.on ? 'on' : '', onClick: () => { A.audio.setOn(true); A.audio.unlock(); A.audio.gong(); try { A.storage.set('argosy_sound', '1'); } catch (e) {} rerender(); } }, t('menu.on')), h('button', { class: !A.audio.on ? 'on' : '', onClick: () => { A.audio.setOn(false); try { A.storage.set('argosy_sound', '0'); } catch (e) {} rerender(); } }, t('menu.off'))),
+      h('h3', {}, t('menu.sound')), h('div', { class: 'seg' }, h('button', { class: A.audio.on ? 'on' : '', onClick: () => { A.audio.setOn(true); A.audio.unlock(); A.audio.gong(); try { A.storage.set('marenostrum_sound', '1'); } catch (e) {} rerender(); } }, t('menu.on')), h('button', { class: !A.audio.on ? 'on' : '', onClick: () => { A.audio.setOn(false); try { A.storage.set('marenostrum_sound', '0'); } catch (e) {} rerender(); } }, t('menu.off'))),
       h('h3', {}, t('menu.stats')),
       h('div', { class: 'sumcard' }, h('div', {}, t('stats.day', { n: s.day })), h('div', {}, t('stats.trades', { n: s.stats.trades })), h('div', {}, t('stats.profit', { n: A.fmt(s.stats.profit) })), h('div', {}, t('stats.wins', { n: s.stats.wins })), h('div', {}, t('stats.losses', { n: s.stats.losses }))),
       h('h3', {}, t('menu.game')),

@@ -1,4 +1,4 @@
-/* Argosy – small illustrated landmarks for the map (procedural, original). draw(ctx, type, x, y, s): base centre at (x,y), width about s. */
+/* Mare Nostrum – small illustrated landmarks for the map (procedural, original). draw(ctx, type, x, y, s): base centre at (x,y), width about s. */
 (function (G) {
   const A = (G.A = G.A || {});
   const OL = '#3b2a17', STONE = '#e9dcc0', STONE2 = '#cdb98e', RED = '#a8452c', GOLD = '#d9a93a', TEAL = '#3f8c8a', GREEN = '#4f7a45', SAND = '#e2c98a', WHITE = '#f7f1e0';
