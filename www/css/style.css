@@ -211,3 +211,5 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 .splash h1 { font-family: 'Special Elite', Georgia, serif; font-size: 34px; letter-spacing: 2px; color: #3b2410; text-shadow: 0 1px 0 #f6e8c0, 0 2px 4px #0003; margin-bottom: 2px; }
 .splash .tag { margin: 0 0 6px; color: #5a3c1c; }
 .splash .seg { margin: 2px 0 6px; } .splash .btn.big { min-height: 52px; margin-top: 0; }
+
+.combatcv{touch-action:none}.cwind{background:rgba(44,29,14,.8);color:#f6ecd0;padding:4px 10px;border-radius:14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:2px}.cwarrow{display:inline-block;transition:transform .6s linear;line-height:0}

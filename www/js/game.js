@@ -292,12 +292,13 @@
     if (s._side === 'p') h += R.upM(s, 'gun');
     return clamp(h, 0.2, 0.85);
   };
-  function fire(c, s, foes) {
-    const t = pick(foes);
-    const hit = Math.random() < R.hitChance(s, t);
+  function fire(c, s, foes, forced) {
+    const t = forced ? forced.t : pick(foes);
+    const hit = forced ? forced.hit : Math.random() < R.hitChance(s, t);
     const ev = { kind: 'shot', from: s.id, to: t.id, hit, side: s._side, sunk: false, cannonLost: false };
+    if (forced && forced.at) ev.at = forced.at;
     if (hit) {
-      const dmg = rnd(2.5, 5) * (1 + s.exp * 0.02) * (1 + R.upLv(s, 'gun') * 0.1) * (s._manual ? 1.3 : 1);
+      const dmg = rnd(2.5, 5) * (1 + s.exp * 0.02) * (1 + R.upLv(s, 'gun') * 0.1) * (forced ? forced.mult : s._manual ? 1.3 : 1);
       t.hull -= dmg; ev.dmg = dmg;
       if (Math.random() < 0.5) t.crew = Math.max(1, t.crew - ri(0, 2));
       if (t.cannons > 0 && Math.random() < 0.08) { t.cannons--; t._cd.pop(); t._cdm.pop(); ev.cannonLost = true; }
@@ -311,9 +312,23 @@
     const mine = alive(c.p).filter((x) => x.cannons > 0); if (!mine.length) return null;
     const sh = mine[0]; sh._manual = true; fire(c, sh, [t]); sh._manual = false; c.manualCd = clamp(2.4 * R.cdMod(), 1.2, 4); c.manualMax = c.manualCd; return true;
   };
+  // sling shot: the UI decides where the ball lands; hit = landed on a ship (mult 1.1-1.6 by accuracy)
+  R.manualShot = function (c, tid, hit, mult, at) {
+    if (c.over || (c.manualCd || 0) > 0) return null;
+    const mine = alive(c.p).filter((x) => x.cannons > 0); if (!mine.length) return null;
+    const sh = mine[0]; const foes = alive(c.e); const t = foes.find((f) => f.id === tid) || foes[0]; if (!t) return null;
+    fire(c, sh, [t], { t, hit: !!hit && !!foes.find((f) => f.id === tid), mult: mult || 1.3, at });
+    c.manualCd = clamp(2.4 * R.cdMod(), 1.2, 4); c.manualMax = c.manualCd; return true;
+  };
+  // combat wind: drifts slowly (never faster than a ball's flight time); rate rises with days played and enemy count
+  R.combatWindRate = (c) => 1 + Math.min(1.5, (S.day - 1) / 120) + 0.15 * Math.max(0, c.e.length - 1);
   R.stepCombat = function (c, dt) {
     if (c.over) return;
     c.manualCd = Math.max(0, (c.manualCd || 0) - dt);
+    if (!c.wind) { const d = (S.wind.dir || 0) * RAD; c.wind = { dir: S.wind.dir || 0, str: S.wind.str || 1, tdir: S.wind.dir || 0, tstr: S.wind.str || 1, next: 2.5 }; }
+    { const w = c.wind, rate = R.combatWindRate(c); w.next -= dt * rate;
+      if (w.next <= 0) { w.next = rnd(2.2, 3.6); w.tdir = (w.tdir + rnd(-14, 14) * Math.min(1.6, rate) + 360) % 360; w.tstr = clamp(w.tstr + rnd(-0.3, 0.3), 0.3, 3.2); }
+      const dd = ((w.tdir - w.dir + 540) % 360) - 180; w.dir = (w.dir + clamp(dd, -30 * dt, 30 * dt) + 360) % 360; w.str += clamp(w.tstr - w.str, -0.35 * dt, 0.35 * dt); }
     c.t += dt; c.boardCd = Math.max(0, c.boardCd - dt); c.fleeCd = Math.max(0, c.fleeCd - dt);
     [[c.p, c.e], [c.e, c.p]].forEach((pair) => {
       alive(pair[0]).forEach((s) => {

@@ -81,6 +81,10 @@ ok(R.hireEscort('light') && S.escortShip, 'hire escort'); R.cancelEscort(); S.go
 const est = R.estimate('athens');
 ok(est.days > 0 && est.nm > 200, 'estimate Athens ' + est.days + ' days ' + Math.round(est.nm) + ' nm');
 
+{ const R2 = R; const en = [R2.mkShip('felucca')]; en[0].id = 'e0'; const cc = R2.newCombat(en); cc.manualCd = 0; const h0 = cc.e[0].hull;
+  ok(R2.manualShot(cc, 'e0', true, 1.4, { x: 1, y: 1 }) && cc.e[0].hull < h0 && cc.events[0].at, 'sling shot hits with forced result');
+  ok(!R2.manualShot(cc, 'e0', true, 1.4, { x: 1, y: 1 }), 'sling shot respects cooldown'); cc.manualCd = 0; const h1 = cc.e[0].hull; R2.manualShot(cc, 'e0', false, 1, { x: 1, y: 1 }); ok(cc.e[0].hull === h1, 'sling miss deals no damage');
+  const a0 = cc.wind; R2.stepCombat(cc, 0.1); const w0 = cc.wind.dir; for (let i = 0; i < 20; i++) R2.stepCombat(cc, 0.1); ok(Math.abs(((cc.wind.dir - w0 + 540) % 360) - 180) < 60, 'combat wind drifts gently'); }
 // ---- full simulation with a trading bot (also exercises combat)
 function bot(days) {
   R.newGame(); const s = R.S(); let fights = 0, wins = 0, flees = 0, boards = 0, defeats = 0, prizes = 0;

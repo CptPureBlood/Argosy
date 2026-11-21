@@ -10,20 +10,24 @@
     time = 0; projs = []; parts = []; floats = []; vis = {}; pos = {}; shake = 0; speed = 1; overT = 0; finished = false; lastBoom = 0;
     c.p.concat(c.e).forEach((s) => { vis[s.id] = { hull: s.hull, max: (s._side === 'p' && R.maxHull) ? R.maxHull(s) : s.hull, sink: 0, sinking: false, flash: 0, phase: Math.random() * 6 }; });
     if (opts.enemyVolley) c.e.forEach((s) => s._cd.forEach((_, i) => { s._cd[i] = Math.min(s._cd[i], 0.2 + i * 0.15); }));
-    A.audio.gullsStop(); A.audio.battleStart && A.audio.battleStart(); A.audio.ambOn && A.audio.ambOn('battle_tail', 0.35);
+    setTimeout(() => { if (ui && ui.log) say(t('combat.aimhint')); }, 400); A.audio.gullsStop(); A.audio.battleStart && A.audio.battleStart(); A.audio.ambOn && A.audio.ambOn('battle_tail', 0.35);
     cv = h('canvas', { class: 'combatcv' });
     ui = {};
     ui.title = h('div', { class: 'ctitle' }, t('combat.vs', { n: c.e.length }));
     ui.log = h('div', { class: 'clog' });
     ui.speed = h('button', { class: 'cspeed', onClick: () => { speed = speed === 1 ? 2 : 1; ui.speed.textContent = '×' + speed; } }, '×1');
+    ui.windArrow = h('span', { class: 'cwarrow', html: A.svg('M12 20V5M6 11l6-6 6 6', 20) }); ui.windTxt = h('span'); ui.wind = h('div', { class: 'cwind' }, ui.windArrow, ui.windTxt);
     ui.boardCd = h('i', { class: 'cd' }); ui.fleeCd = h('i', { class: 'cd' });
     ui.boardTxt = h('span'); ui.fleeTxt = h('span');
     ui.board = h('button', { class: 'cbtn board', onClick: () => act('board') }, ui.boardCd, ui.boardTxt);
     ui.flee = h('button', { class: 'cbtn flee', onClick: () => act('flee') }, ui.fleeCd, ui.fleeTxt);
     ui.fireImg = h('img', { class: 'px', src: 'img/ui_fire_ready.png' }); ui.fireTxt = h('span', { class: 'ftxt' });
-    ui.fire = h('button', { class: 'cfire', 'aria-label': 'fire', onClick: () => { A.audio.unlock(); if (R.manualFire(c)) shake = Math.max(shake, 1.5); } }, ui.fireImg, ui.fireTxt);
-    cv.addEventListener('pointerdown', (e) => { const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; const hit = c.e.filter((s) => !s.sunk).find((s) => { const q = pos[s.id]; return q && Math.abs(x - q.x) < q.wd * 0.6 && y > q.y - q.hg - 10 && y < q.y + 20; }); if (hit) c.target = hit.id; });
-    root = h('div', { class: 'combat' }, cv, h('div', { class: 'chud' }, ui.title, ui.speed), ui.log, h('div', { class: 'cactions' }, ui.board, ui.fire, ui.flee));
+    ui.fire = h('button', { class: 'cfire', 'aria-label': 'quick shot', onClick: () => { A.audio.unlock(); if (R.manualFire(c)) shake = Math.max(shake, 1.2); } }, ui.fireImg, ui.fireTxt);
+    cv.addEventListener('pointerdown', (e) => { if (c.over) return; const r = cv.getBoundingClientRect(); sling = { x0: e.clientX - r.left, y0: e.clientY - r.top, x: e.clientX - r.left, y: e.clientY - r.top }; try { cv.setPointerCapture(e.pointerId); } catch (er) {} });
+    cv.addEventListener('pointermove', (e) => { if (!sling) return; const r = cv.getBoundingClientRect(); sling.x = e.clientX - r.left; sling.y = e.clientY - r.top; });
+    const release = (e) => { if (!sling) return; const s0 = sling; sling = null; if (c.over) return; const ap = aimPoint(s0); if (!ap) return; releaseShot(ap); };
+    cv.addEventListener('pointerup', release); cv.addEventListener('pointercancel', () => { sling = null; });
+    root = h('div', { class: 'combat' }, cv, h('div', { class: 'chud' }, ui.title, ui.wind, ui.speed), ui.log, h('div', { class: 'cactions' }, ui.board, ui.fire, ui.flee));
     document.getElementById('overlay').append(root);
     ctx = cv.getContext('2d'); resize(); window.addEventListener('resize', resize);
     last = performance.now(); raf = requestAnimationFrame(frame);
@@ -56,7 +60,7 @@
         const a = find(ev.from), b = find(ev.to); if (!a || !b) continue;
         const pa = pos[a.id], pb = pos[b.id]; if (!pa || !pb) continue;
         const sx0 = pa.x + (Math.random() - 0.5) * pa.hl * 1.0; const sy0 = pa.y - pa.hg * 0.3;
-        let tx, ty; if (ev.hit) { tx = pb.x + (Math.random() - 0.5) * pb.hl * 1.1; ty = pb.y - pb.hg * (0.12 + Math.random() * 0.4); }
+        let tx, ty; if (ev.at) { tx = ev.at.x; ty = ev.at.y; } else if (ev.hit) { tx = pb.x + (Math.random() - 0.5) * pb.hl * 1.1; ty = pb.y - pb.hg * (0.12 + Math.random() * 0.4); }
         else { tx = pb.x + (Math.random() - 0.5) * pb.hl * 1.8; ty = pb.y + (Math.random() < 0.5 ? -1 : 1) * (3 + Math.random() * 22); }
         projs.push({ sx: sx0, sy: sy0, tx, ty, t: 0, dur: 1.15 + Math.random() * 0.35, ev, tid: b.id, trail: [] });
         parts.push({ k: 'spr', f: ['fx_muzzle'], x: sx0 + pa.dir * 6, y: sy0, sz: pa.wd * 0.22, life: 0, max: 0.18 }); for (let i = 0; i < 3; i++) parts.push({ k: 'spr', f: ['fx_smk1', 'fx_smk2', 'fx_smk3', 'fx_smk4', 'fx_smk5', 'fx_smk6'], x: sx0 + pa.dir * (8 + i * 5), y: sy0 - i * 3, vx: pa.dir * rnd(4, 14), vy: -rnd(6, 16), sz: pa.wd * rnd(0.12, 0.2), life: 0, max: rnd(0.9, 1.6) });
@@ -101,19 +105,37 @@
     shake = Math.max(0, shake - dt * 14);
     draw(); drawAim(); buttons();
   }
+  let sling = null;
+  const myShip = () => { const m = c.p.filter((s) => !s.sunk && s.cannons > 0)[0]; return m && pos[m.id] ? pos[m.id] : null; };
+  // slingshot: pull back from where you pressed; the ball flies the opposite way, 2.6x the pull length
+  function aimPoint(s0) {
+    const pm = myShip(); if (!pm) return null; const dx = s0.x0 - s0.x, dy = s0.y0 - s0.y, len = Math.hypot(dx, dy); if (len < 14) return null;
+    const L = Math.min(len, Math.min(w, hh) * 0.5), k = 2.6 * L / len; const sx = pm.x, sy = pm.y - pm.hg * 0.3;
+    return { sx, sy, x: Math.max(8, Math.min(w - 8, sx + dx * k)), y: Math.max(hh * 0.12, Math.min(hh - 90, sy + dy * k)), pull: L / (Math.min(w, hh) * 0.5) };
+  }
+  function releaseShot(ap) {
+    if ((c.manualCd || 0) > 0) { say(t('combat.reload')); return; }
+    const W = c.wind || { dir: 0, str: 1 }; const rad = W.dir * Math.PI / 180, dist = Math.hypot(ap.x - ap.sx, ap.y - ap.sy);
+    const at = { x: ap.x + Math.sin(rad) * W.str * dist * 0.05, y: ap.y - Math.cos(rad) * W.str * dist * 0.05 };
+    let best = null, bd = 9;
+    c.e.filter((s) => !s.sunk).forEach((s) => { const q = pos[s.id]; if (!q) return; const F = 0.85 + (R.hitChance(c.p[0], s) - 0.5) * 1.0; const nx = (at.x - q.x) / (q.hl * 1.1 * F), ny = (at.y - (q.y - q.hg * 0.32)) / (q.hg * 0.42 * F), d = Math.hypot(nx, ny); if (d <= 1 && d < bd) { bd = d; best = s; } });
+    const tid = best ? best.id : (c.e.filter((s) => !s.sunk)[0] || {}).id; if (!tid) return;
+    const mult = best ? 1.1 + 0.5 * (1 - bd) : 1;
+    if (R.manualShot(c, tid, !!best, mult, at)) { shake = Math.max(shake, 1.5); if (best && bd < 0.35) floats.push({ x: at.x, y: at.y - 24, txt: t('combat.perfect'), col: '#fff3d0', t: 0, big: true }); else if (!best) floats.push({ x: at.x, y: at.y - 10, txt: t('combat.miss'), col: '#e8f1f5', t: 0 }); }
+  }
   function drawAim() {
-    if (c.over) return; const foes = c.e.filter((s) => !s.sunk); if (!foes.length) return;
-    let t = foes.find((f) => f.id === c.target); if (!t) { t = foes[0]; c.target = t.id; }
-    const pe = pos[t.id], mine = c.p.filter((s) => !s.sunk && s.cannons > 0)[0]; if (!pe || !mine || !pos[mine.id]) return; const pm = pos[mine.id];
-    const ready = !(c.manualCd > 0); const tx = pe.x, ty = pe.y - pe.hg * 0.45, sx = pm.x, sy = pm.y - pm.hg * 0.3;
+    if (c.over) return; const ready = !(c.manualCd > 0);
+    // wind readout
+    const W = c.wind; if (W && ui.wind) { ui.windArrow.style.transform = 'rotate(' + Math.round(W.dir) + 'deg)'; ui.windTxt.textContent = ' ' + t('combat.wind', { n: Math.round(W.str * 2) }); }
+    if (!sling) return; const ap = aimPoint(sling); if (!ap) return;
     ctx.save(); ctx.imageSmoothingEnabled = false;
-    if (ready) {
-      const mx = (sx + tx) / 2, my = Math.min(sy, ty) - Math.hypot(tx - sx, ty - sy) * 0.18, N = 9, dot = fx0('ui_dot'), dim = fx0('ui_dot_dim');
-      for (let i = 0; i < N; i++) { const f = ((i + time * 1.4) % N) / N, a = (1 - f) * (1 - f), x = a * sx + 2 * f * (1 - f) * mx + f * f * tx, y = a * sy + 2 * f * (1 - f) * my + f * f * ty, im = i % 2 ? dim : dot, sz = 7 + f * 3; if (im.complete && im.naturalWidth) { ctx.globalAlpha = 0.35 + 0.65 * (1 - Math.abs(f - 0.5) * 1.2); ctx.drawImage(im, x - sz / 2, y - sz / 2, sz, sz); } }
-      ctx.globalAlpha = 1;
-    }
-    const am = fx0(ready ? 'ui_aim_lock' : 'ui_aim'), as = Math.max(46, pe.wd * 0.55) * (1 + (ready ? Math.sin(time * 5) * 0.04 : 0));
-    if (am.complete && am.naturalWidth) { ctx.globalAlpha = ready ? 0.95 : 0.6; ctx.drawImage(am, tx - as / 2, ty - as / 2, as, as); }
+    // rubber band
+    ctx.strokeStyle = ready ? 'rgba(255,240,200,0.9)' : 'rgba(255,240,200,0.4)'; ctx.lineWidth = 3; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.moveTo(sling.x0, sling.y0); ctx.lineTo(sling.x, sling.y); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = ready ? '#f2c14e' : '#8a7a50'; ctx.fillRect(sling.x - 5, sling.y - 5, 10, 10);
+    // trajectory preview to the aimed point (wind is NOT shown: compensate by feel and the wind gauge)
+    const sx = ap.sx, sy = ap.sy, tx = ap.x, ty = ap.y, mx = (sx + tx) / 2, my = Math.min(sy, ty) - Math.hypot(tx - sx, ty - sy) * 0.18, N = 12, dot = fx0('ui_dot'), dim = fx0('ui_dot_dim');
+    for (let i = 1; i <= N; i++) { const f = i / (N + 1), a = (1 - f) * (1 - f), x = a * sx + 2 * f * (1 - f) * mx + f * f * tx, y = a * sy + 2 * f * (1 - f) * my + f * f * ty, im = i % 2 ? dim : dot, sz = 6 + f * 4; if (im.complete && im.naturalWidth) { ctx.globalAlpha = ready ? 0.95 : 0.4; ctx.drawImage(im, x - sz / 2, y - sz / 2, sz, sz); } }
+    const am = fx0(ready ? 'ui_aim_lock' : 'ui_aim'), as = 44 + Math.sin(time * 6) * 2; ctx.globalAlpha = ready ? 0.95 : 0.6; if (am.complete && am.naturalWidth) ctx.drawImage(am, tx - as / 2, ty - as / 2, as, as);
     ctx.restore();
   }
   const fx0 = (n) => (FXI[n] = FXI[n] || Object.assign(new Image(), { src: 'img/' + n + '.png' }));
