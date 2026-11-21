@@ -181,21 +181,34 @@
   }
 
   const PSH = ['ship_felucca_pirate', 'ship_galley_pirate', 'ship_caravel_pirate'];
+  const evCache = {};
+  // up to 5 wander spots per port: random points within ~4 deg that are open sea (>=2 cells from coast)
+  function ev(id) {
+    if (evCache[id]) return evCache[id]; const p = A.port(id), out = []; let sd = 0; for (let k = 0; k < id.length; k++) sd = (sd * 31 + id.charCodeAt(k)) % 9973;
+    const r = () => { sd = (sd * 16807 + 11) % 2147483647; return sd / 2147483647; };
+    for (let t = 0; t < 600 && out.length < 5; t++) {
+      const lon = p.lon + (r() - 0.5) * 12, lat = p.lat + (r() - 0.5) * 9, rx = 0.8 + r() * 0.9, ry = 0.5 + r() * 0.6; let ok = true;
+      for (let a = 0; a < 6.3 && ok; a += 0.7) for (const f of [0.6, 1.1]) { const c = W.toCell(lon + Math.cos(a) * rx * f, lat + Math.sin(a * 0.9) * ry * f); if (W.isLandCell(c[0], c[1]) || W.nearCoast[c[1] * W.cols + c[0]]) ok = false; }
+      if (ok) out.push({ lon, lat, rx, ry, ph: r() * 6.3 });
+    }
+    return (evCache[id] = out);
+  }
   function drawDanger() {
     const S = R.S(); if (!S) return;
     S.skulls.forEach((id, zi) => {
       const p = A.port(id); const q = proj(p.lon, p.lat); const r = (260 / 60) * M.k * YS * (1 + Math.sin(time * 1.5) * 0.03);
-      const g = ctx.createRadialGradient(q[0], q[1], r * 0.1, q[0], q[1], r); g.addColorStop(0, 'rgba(150,30,20,0.16)'); g.addColorStop(1, 'rgba(150,30,20,0)');
+      const g = ctx.createRadialGradient(q[0], q[1], r * 0.1, q[0], q[1], r); g.addColorStop(0, 'rgba(170,30,20,0.30)'); g.addColorStop(1, 'rgba(150,30,20,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 6.3); ctx.fill();
-      // a few tiny black-sailed pirate ships drifting slowly around the hot spot
-      const n = 4, sz = Math.max(13, Math.min(24, M.k * 1.1)); ctx.imageSmoothingEnabled = false;
-      for (let i = 0; i < n; i++) {
-        const ph = i * 1.57 + zi * 2.1, sp = 0.05 + 0.012 * i, a = time * sp * (i % 2 ? 1 : -1) + ph, rr = r * (0.25 + 0.17 * i);
-        const x = q[0] + Math.cos(a) * rr, y = q[1] + Math.sin(a) * rr * 0.62; if (x < -30 || x > w + 30 || y < -30 || y > h + 30) continue;
-        const im = A.img(PSH[(i + zi) % PSH.length]); if (!im.complete || !im.naturalWidth) continue;
-        const dx = -Math.sin(a) * (i % 2 ? 1 : -1), bob = Math.sin(time * 2 + ph) * 1; const hh2 = sz * im.naturalHeight / im.naturalWidth;
-        ctx.save(); ctx.translate(x, y + bob); if (dx < 0) ctx.scale(-1, 1); ctx.globalAlpha = 0.95; ctx.drawImage(im, -sz / 2, -hh2 * 0.8, sz, hh2); ctx.restore();
-      }
+      // black-sailed pirate ships wander on open water near the port (never over land)
+      const sea = ev(id); const sz = Math.max(20, Math.min(36, M.k * 1.7)); ctx.imageSmoothingEnabled = false;
+      sea.forEach((sp, i) => {
+        const a = time * (0.12 + 0.03 * (i % 3)) + sp.ph, lon = sp.lon + Math.cos(a) * sp.rx, lat = sp.lat + Math.sin(a * 0.9) * sp.ry;
+        const c = W.toCell(lon, lat); if (W.isLandCell(c[0], c[1]) || W.nearCoast[c[1] * W.cols + c[0]]) return;
+        const x = w / 2 + (lon - M.cx) * M.k, y = h / 2 - (lat - M.cy) * M.k * YS; if (x < -40 || x > w + 40 || y < -40 || y > h + 40) return;
+        const im = A.img(PSH[(i + zi) % PSH.length]); if (!im.complete || !im.naturalWidth) return;
+        const dir = Math.cos(a) * -Math.sign(0.12), hh2 = sz * im.naturalHeight / im.naturalWidth;
+        ctx.save(); ctx.translate(x, y + Math.sin(time * 2 + sp.ph)); if (Math.sin(a) * 0 + (-Math.sin(a)) < 0) ctx.scale(-1, 1); ctx.drawImage(im, -sz / 2, -hh2 * 0.8, sz, hh2); ctx.restore();
+      });
     });
   }
 
