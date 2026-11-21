@@ -148,7 +148,7 @@
 /* Sample engine: real recordings (ogg) override the synthesized sounds once decoded; the synths stay as fallback. */
 (function (G) {
   const A = G.A, AU = A.audio; const buf = (AU.buf = {}); const synth = { coin: AU.coin, gong: AU.gong, cannon: AU.cannon, hit: AU.hit, splash: AU.splash, gull: AU.gull, gullsStart: AU.gullsStart, gullsStop: AU.gullsStop };
-  const MAN = ['cannon_1', 'cannon_2', 'cannon_far', 'hit_1', 'hit_2', 'hit_rumble', 'battle_sting', 'battle_tail', 'splash_big_1', 'splash_big_2', 'sink', 'quill', 'quill_1', 'quill_2', 'quill_3', 'quill_4', 'amb_sea', 'amb_harbor', 'gull_1', 'gull_2', 'gull_3', 'gull_4', 'bell_1', 'bell_2', 'bell_ship'];
+  const MAN = ['cannon_1', 'cannon_2', 'cannon_far', 'hit_1', 'hit_2', 'hit_rumble', 'battle_sting', 'battle_tail', 'splash_big_1', 'splash_big_2', 'sink', 'quill', 'quill_1', 'quill_2', 'quill_3', 'quill_4', 'amb_sea', 'amb_harbor', 'rain', 'thunder_1', 'thunder_2', 'thunder_3', 'gull_1', 'gull_2', 'gull_3', 'gull_4', 'bell_1', 'bell_2', 'bell_ship'];
   for (let i = 1; i <= 12; i++) MAN.push('coin_' + i);
   for (let i = 1; i <= 12; i++) MAN.push('splash_' + i); for (let i = 1; i <= 30; i++) MAN.push('voice_' + i);
   let loading = false;

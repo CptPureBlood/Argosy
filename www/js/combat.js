@@ -88,7 +88,7 @@
 
   function frame(ts) {
     raf = requestAnimationFrame(frame);
-    const dt = Math.min(0.05, (ts - last) / 1000 || 0.016); last = ts; time += dt; const sdt = dt * speed;
+    const dt = Math.min(0.05, (ts - last) / 1000 || 0.016); last = ts; lastDt = dt; time += dt; const sdt = dt * speed;
     layout();
     if (!c.over) R.stepCombat(c, sdt);
     consume();
@@ -128,11 +128,19 @@
   }
 
   let bgName = null; const BGS = ['bg_day1', 'bg_day2', 'bg_night1', 'bg_night2', 'bg_storm1', 'bg_storm2'];
-  const bgImg = () => { if (!bgName) { const S0 = R.S(); const st = S0 ? S0.wind.str : 1; const r = Math.random(); bgName = 'bg_day1'; } const i = (bgCache[bgName] = bgCache[bgName] || Object.assign(new Image(), { src: 'img/' + bgName + '.png' })); return i; }; const bgCache = {}, bgPix = {};
+  const bgImg = () => { if (!bgName) { const S0 = R.S(); const st = S0 ? S0.wind.str : 1; const r = Math.random(); bgName = st > 2.3 || r < 0.12 ? 'bg_storm1' : r < 0.4 ? 'bg_night1' : 'bg_day1'; stormOn = bgName === 'bg_storm1'; flash = 0; nextBolt = 2 + Math.random() * 4; rain = []; for (let i = 0; i < 90; i++) rain.push({ x: Math.random(), y: Math.random(), v: 0.9 + Math.random() * 0.8 }); if (stormOn) { A.audio.ambOn && A.audio.ambOn('rain', 0.5); } } const i = (bgCache[bgName] = bgCache[bgName] || Object.assign(new Image(), { src: 'img/' + bgName + '.png' })); return i; }; const bgCache = {}, bgPix = {}; let stormOn = false, flash = 0, nextBolt = 5, rain = [];
+  function stormFx(dt) {
+    if (!stormOn) return; nextBolt -= dt; if (nextBolt <= 0) { flash = 1; nextBolt = 4 + Math.random() * 6; const b = A.audio.buf && A.audio.buf['thunder_' + (1 + Math.floor(Math.random() * 3))]; if (b) A.audio.play(b, { vol: 0.7, delay: 0.25 + Math.random() * 0.8 }); }
+    flash = Math.max(0, flash - dt * 2.2);
+    ctx.fillStyle = 'rgba(205,225,245,0.7)'; const sp = Math.max(1, Math.round(w / 195));
+    rain.forEach((d) => { d.y += dt * d.v * 1.1; d.x -= dt * d.v * 0.22; if (d.y > 1) { d.y = -0.04; d.x = Math.random() * 1.2; } const px = Math.round(d.x * w / sp) * sp, py = Math.round(d.y * hh / sp) * sp; ctx.fillRect(px, py, sp, sp * 3); ctx.fillRect(px + sp, py + sp * 3, sp, sp); });
+    if (flash > 0.02) { ctx.fillStyle = 'rgba(235,240,255,' + (flash * 0.42).toFixed(3) + ')'; ctx.fillRect(0, 0, w, hh); }
+  }
+  let lastDt = 0.016;
   function draw() {
     ctx.save(); ctx.clearRect(0, 0, w, hh);
     if (shake > 0) ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5);
-    { const bi = bgImg(); if (bi.complete && bi.naturalWidth) { const HZ = { bg_day1: 0.19, bg_day2: 0.31, bg_night1: 0.43, bg_night2: 0.45, bg_storm1: 0.46, bg_storm2: 0.47 }[bgName] || 0.19; const sc = Math.max(w / bi.naturalWidth, 0.8 * hh / (bi.naturalHeight * (1 - HZ))); ctx.fillStyle = '#2f78b0'; ctx.fillRect(-10, -10, w + 20, hh + 20); ctx.imageSmoothingEnabled = false; ctx.drawImage(bi, Math.round((w - bi.naturalWidth * sc) / 2), Math.min(0, Math.round(hh * 0.2 - HZ * bi.naturalHeight * sc)), Math.round(bi.naturalWidth * sc), Math.round(bi.naturalHeight * sc)); ctx.imageSmoothingEnabled = true; } else { ctx.fillStyle = '#3d737f'; ctx.fillRect(-10, -10, w + 20, hh + 20); } }
+    { const bi = bgImg(); if (bi.complete && bi.naturalWidth) { const HZ = { bg_day1: 0.19, bg_night1: 0.19, bg_storm1: 0.215 }[bgName] || 0.19; const sc = Math.max(w / bi.naturalWidth, 0.8 * hh / (bi.naturalHeight * (1 - HZ))); ctx.fillStyle = '#2f78b0'; ctx.fillRect(-10, -10, w + 20, hh + 20); ctx.imageSmoothingEnabled = false; ctx.drawImage(bi, Math.round((w - bi.naturalWidth * sc) / 2), Math.min(0, Math.round(hh * 0.2 - HZ * bi.naturalHeight * sc)), Math.round(bi.naturalWidth * sc), Math.round(bi.naturalHeight * sc)); ctx.imageSmoothingEnabled = true; } else { ctx.fillStyle = '#3d737f'; ctx.fillRect(-10, -10, w + 20, hh + 20); } }
     // swell bands + streaks scrolling downwards (ships sail up)
     const S = R.S(); const ws = S ? S.wind.str : 1; A.windStr = ws;
     ctx.fillStyle = 'rgba(255,255,255,0.05)'; for (let i = 0; i < 6; i++) { const y = ((time * 14 + i * hh / 6) % (hh + 80)) - 40; ctx.beginPath(); for (let x = 0; x <= w; x += 12) { const yy = y + Math.sin(x * 0.03 + i) * 10; x ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy); } for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, y + 28 + Math.sin(x * 0.03 + i + 1) * 10); ctx.closePath(); ctx.fill(); }
@@ -163,6 +171,7 @@
       else { ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(q.x, q.y, q.r, 0, 6.3); ctx.stroke(); }
       ctx.globalAlpha = 1;
     });
+    stormFx(Math.min(0.05, lastDt));
     projs.forEach((p) => {
       const f = p.t / p.dur; const x = p.sx + (p.tx - p.sx) * f; const y = p.sy + (p.ty - p.sy) * f; const lift = Math.sin(f * Math.PI);
       ctx.fillStyle = 'rgba(10,30,40,0.35)'; ctx.beginPath(); ctx.ellipse(x, y + 4 + lift * 10, 2.6, 1.8, 0, 0, 6.3); ctx.fill();
@@ -184,7 +193,7 @@
   }
 
   function finish() {
-    finished = true; A.audio.ambOff && A.audio.ambOff('battle_tail'); cancelAnimationFrame(raf); window.removeEventListener('resize', resize);
+    finished = true; A.audio.ambOff && A.audio.ambOff('battle_tail'); if (stormOn) { A.audio.ambOff && A.audio.ambOff('rain'); stormOn = false; } cancelAnimationFrame(raf); window.removeEventListener('resize', resize);
     root.remove();
     const res = R.finishCombat(c);
     onDone && onDone(res, c);
