@@ -358,7 +358,14 @@
         : h('button', { class: 'btn sm', disabled: s.gold < R.TH_COST, onClick: () => { if (R.thBuy()) A.audio.gong(); rerender(); } }, t('est.buy') + ' ' + R.TH_COST));
     const fitCard = h('div', { class: 'card' }, h('h3', {}, t('est.fit')), h('p', { class: 'sub' }, t('est.fit.d', { c: R.FIT_COST })),
       h('button', { class: 'btn sm' + (s.fitter ? ' ghost' : ''), onClick: () => { R.fitterToggle(); rerender(); } }, s.fitter ? t('est.fire') + ' (' + t('est.on') + ')' : t('est.hire') + ' ' + R.fitterCost() + '/d'));
-    return h('div', { class: 'list yard' }, whCard, thCard, fitCard);
+    const bk = R.bankAt();
+    const bankCard = h('div', { class: 'card' }, h('h3', {}, t('est.bank')), h('p', { class: 'sub' }, t('est.bank.d', { r: (R.BANK_RATE * 100).toFixed(2) })),
+      bk ? h('div', {}, h('p', {}, t('est.bal') + ': ' + A.fmt(R.bankBal())),
+        h('div', { class: 'acts' }, [100, 1000, 'all'].map((n) => h('button', { class: 'btn sm', disabled: !s.gold, onClick: () => { if (R.bankDeposit(n === 'all' ? s.gold : n)) A.audio.coin(); rerender(); } }, t('est.dep') + ' ' + (n === 'all' ? t('est.all') : n)))),
+        h('div', { class: 'acts' }, [100, 1000, 'all'].map((n) => h('button', { class: 'btn sm ghost', disabled: !R.bankBal(), onClick: () => { if (R.bankWithdraw(n === 'all' ? R.bankBal() : n)) A.audio.coin(); rerender(); } }, t('est.wd') + ' ' + (n === 'all' ? t('est.all') : n)))))
+        : h('button', { class: 'btn sm', disabled: s.gold < R.BANK_OPEN, onClick: () => { if (R.bankOpen()) A.audio.gong(); rerender(); } }, t('est.open') + ' ' + R.BANK_OPEN),
+      R.bankTotal() ? h('p', { class: 'sub' }, t('est.bank.all', { n: A.fmt(R.bankTotal()) })) : null);
+    return h('div', { class: 'list yard' }, bankCard, whCard, thCard, fitCard);
   }
   function tavernBody() {
     const s = S(); const list = R.tavern(s.port);

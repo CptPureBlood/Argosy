@@ -437,7 +437,17 @@
   R.thCollect = function () { const th = R.thAt(); if (!th) return 0; let got = 0; Object.keys(th.stock).forEach((g) => { const n = Math.min(th.stock[g], R.fleetCap() - R.cargoCount()); if (n > 0) { th.stock[g] -= n; if (th.stock[g] <= 0) delete th.stock[g]; S.cargo[g] = (S.cargo[g] || 0) + n; got += n; } }); R.save(); return got; };
   R.fitterCost = () => S.ships.length * FIT_COST;
   R.fitterToggle = function () { S.fitter = !S.fitter; R.save(); return S.fitter; };
+  // ---- bank: one vault per port, money can only be taken out in the port it was paid into
+  const BANK_OPEN = 500, BANK_RATE = 0.0005;
+  R.BANK_OPEN = BANK_OPEN; R.BANK_RATE = BANK_RATE;
+  R.bankAt = (p) => (S.bank && S.bank[p || S.port]) || null;
+  R.bankBal = (p) => { const b = R.bankAt(p); return b ? Math.floor(b.bal) : 0; };
+  R.bankTotal = () => Object.keys(S.bank || {}).reduce((a, p) => a + Math.floor(S.bank[p].bal), 0);
+  R.bankOpen = function () { if (R.bankAt() || S.gold < BANK_OPEN) return false; S.bank = S.bank || {}; S.bank[S.port] = { bal: 0 }; S.gold -= BANK_OPEN; R.save(); return true; };
+  R.bankDeposit = function (n) { const b = R.bankAt(); n = Math.floor(Math.min(n, S.gold)); if (!b || !(n > 0)) return 0; S.gold -= n; b.bal += n; R.save(); return n; };
+  R.bankWithdraw = function (n) { const b = R.bankAt(); n = Math.floor(Math.min(n, b ? b.bal : 0)); if (!b || !(n > 0)) return 0; b.bal -= n; S.gold += n; R.save(); return n; };
   R.estateDay = function () {
+    Object.keys(S.bank || {}).forEach((p) => { S.bank[p].bal *= 1 + BANK_RATE; });
     Object.keys(S.wh || {}).forEach((p) => { if (S.wh[p].until + 30 < S.day) delete S.wh[p]; });
     let cost = 0;
     Object.keys(S.th || {}).forEach((p) => { const th = S.th[p], port = A.port(p); cost += TH_UPKEEP; if (R.thCount(th) < TH_CAP) { port.p.forEach((g) => { th.stock[g] = (th.stock[g] || 0) + 1; }); } });

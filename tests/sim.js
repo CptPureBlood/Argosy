@@ -53,6 +53,8 @@ ok(R.hireCrew(cv.id, 5) === 5, 'hire crew');
   S.cargo.salt = 10; ok(R.whPut('salt', 6) === 6 && R.whInfo().goods.salt === 6, 'store goods'); ok(R.whTake('salt', 6) === 6, 'take goods');
   ok(R.thBuy() && !!R.thAt(), 'build trading house'); for (let i = 0; i < 5; i++) R.advanceDay(); ok(R.thCount(R.thAt()) > 0, 'trading house produces'); ok(R.thCollect() > 0, 'collect production');
   S.ships[0].hull = 10; R.fitterToggle(); R.advanceDay(); ok(S.ships[0].hull > 10, 'fitter repairs');
+  const g0 = S.gold; ok(R.bankOpen() && S.gold === g0 - 500, 'open bank'); ok(R.bankDeposit(1000) === 1000 && R.bankBal() === 1000, 'deposit'); R.advanceDay(); ok(R.bankBal() >= 1000, 'interest');
+  const home = S.port; S.port = 'naples'; ok(R.bankWithdraw(500) === 0 && R.bankBal() === 0, 'no withdraw in other port'); S.port = home; ok(R.bankWithdraw(400) === 400, 'withdraw at same port');
   S.cargo = {};
 }
 S.port = 'naples';
