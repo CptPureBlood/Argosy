@@ -226,17 +226,17 @@
     for (let i = 0; i < 4; i++) { const sp = 14 + i * 5, x = ((time * sp + i * 173) % (w + 80)) - 40, y = h * (0.15 + i * 0.2) + Math.sin(time * 1.3 + i * 2) * 10, fl = 1 + Math.sin(time * 9 + i) * 0.35; ctx.globalAlpha = 0.85; ctx.drawImage(g, x, y - 7 * fl, 18, 14 * fl); ctx.globalAlpha = 1; }
   }
   function drawPorts() {
-    const S = R.S(); const lang = A.lang; const placed = []; const fs = Math.max(10, Math.min(15, M.k * 0.9)); const lm = Math.max(16, Math.min(32, M.k * 1.0));
+    const S = R.S(); const lang = A.lang; const placed = []; const fs = Math.max(9, Math.min(15, M.k * 0.9)); const lm = Math.max(16, Math.min(32, M.k * 1.0));
     const order = A.PORTS.slice().sort((a, b) => (b.id === M.sel ? 2 : 0) + (S && S.port === b.id ? 1 : 0) - ((a.id === M.sel ? 2 : 0) + (S && S.port === a.id ? 1 : 0)) || (b.yard ? 1 : 0) - (a.yard ? 1 : 0));
     ctx.font = fs + 'px "Special Elite", Georgia, serif';
     const draws = [];
     order.forEach((p) => {
       const q = proj(p.lon, p.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -40 || q[1] > h + 40) return;
       const sel = M.sel === p.id; const name = p.n[lang]; const here = S && S.port === p.id; const nameW = ctx.measureText(name).width + (p.yard ? fs + 3 : 0);
-      const showGoods = sel; const wantLabel = sel || here || p.yard || p.id === 'colombo' || M.k >= FAR_K;
+      const showGoods = sel; const wantLabel = true;
       const bh = sel ? fs + 6 + 17 : fs + 4; const bwid = sel ? Math.max(nameW + 10, 3 * 17 + 6) : nameW + 6;
       const cand = sel ? [[q[0] + 24, q[1] - bh - 18], [q[0] - bwid - 24, q[1] - bh - 18], [q[0] + 24, q[1] + 16], [q[0] - bwid - 24, q[1] + 16]]
-        : [[q[0] + 8, q[1] - bh / 2], [q[0] - bwid - 8, q[1] - bh / 2], [q[0] - bwid / 2, q[1] + 8], [q[0] - bwid / 2, q[1] - bh - 8]];
+        : [[q[0] + 11, q[1] - bh / 2], [q[0] - bwid - 11, q[1] - bh / 2], [q[0] - bwid / 2, q[1] + 11], [q[0] - bwid / 2, q[1] - bh - 11], [q[0] + 11, q[1] - bh - 6], [q[0] + 11, q[1] + 4], [q[0] - bwid - 11, q[1] - bh - 6], [q[0] - bwid - 11, q[1] + 4]];
       let spot = null;
       if (wantLabel) {
         for (const c of cand) { const r = [c[0], c[1], bwid, bh]; if (sel && (r[0] < 4 || r[0] + bwid > w - 4 || r[1] < 4 || r[1] + bh > h - 4)) continue; if (!placed.some((o) => r[0] < o[0] + o[2] && r[0] + r[2] > o[0] && r[1] < o[1] + o[3] && r[1] + r[3] > o[1])) { spot = r; break; } }
@@ -255,10 +255,10 @@
       if (M.k > 8 && p.lm) A.drawLandmark(ctx, p.lm, q[0] - lm * 0.7, q[1] - 4, lm);
       if (sel) { ctx.strokeStyle = 'rgba(138,59,36,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(q[0], q[1], 11 + Math.sin(time * 4) * 2, 0, 6.3); ctx.stroke(); }
       ctx.fillStyle = here ? '#8a3b24' : '#f6ecd0'; ctx.strokeStyle = '#2c1d0e'; ctx.lineWidth = 1.6;
-      ctx.beginPath(); ctx.arc(q[0], q[1], 5.5, 0, 6.3); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(q[0], q[1], 8.5, 0, 6.3); ctx.fillStyle = 'rgba(20,12,4,0.45)'; ctx.fill(); ctx.fillStyle = here ? '#8a3b24' : '#f6ecd0'; ctx.beginPath(); ctx.arc(q[0], q[1], 6, 0, 6.3); ctx.fill(); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(q[0], q[1], 8.5, 0, 6.3); ctx.stroke();
       if (here) { const fl = A.img('mk_flag'); if (fl.complete && fl.naturalWidth) { ctx.imageSmoothingEnabled = false; const fw = 20, fh = fw * fl.naturalHeight / fl.naturalWidth, rr = 18; for (let r = 0; r < rr; r++) { const dx = Math.sin(time * 5 + r * 0.45) * 1.6 * (r / rr); ctx.drawImage(fl, 0, r * fl.naturalHeight / rr, fl.naturalWidth, fl.naturalHeight / rr + 0.5, q[0] - 3 + dx, q[1] - 6 - fh + r * fh / rr, fw, fh / rr + 0.5); } } }
       if (spot) {
-        ctx.font = fs + 'px "Special Elite", Georgia, serif'; ctx.textAlign = 'left'; if (!sel) { ctx.lineJoin = 'round'; ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(246,238,214,0.95)'; ctx.strokeText(d.name, spot[0] + 3, spot[1] + fs); } ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + (sel ? 5 : 3), spot[1] + fs); if (p.yard) { const ya = A.img('ui_anchor'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; const ah = fs + 1, aw = ah * ya.naturalWidth / ya.naturalHeight; ctx.drawImage(ya, spot[0] + (sel ? 8 : 6) + ctx.measureText(d.name).width, spot[1] + 1, aw, ah); } }
+        ctx.font = fs + 'px "Special Elite", Georgia, serif'; ctx.textAlign = 'left'; if (!sel) { ctx.lineJoin = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(246,238,214,0.97)'; ctx.strokeText(d.name, spot[0] + 3, spot[1] + fs); } ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + (sel ? 5 : 3), spot[1] + fs); if (p.yard) { const ya = A.img('ui_anchor'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; const ah = fs + 1, aw = ah * ya.naturalWidth / ya.naturalHeight; ctx.drawImage(ya, spot[0] + (sel ? 8 : 6) + ctx.measureText(d.name).width, spot[1] + 1, aw, ah); } }
         if (d.showGoods) p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, spot[0] + 3 + i * 17, spot[1] + fs + 5, 16, 16); });
       }
     });

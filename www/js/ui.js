@@ -470,7 +470,7 @@
     const loans = s.loans.length ? [h('h3', {}, t('loan.yours')), s.loans.map((l) => {
       const dl = l.due - s.day;
       return h('div', { class: 'card loan' + (dl < 0 ? ' late' : '') }, h('div', { class: 'info' }, h('b', {}, t('loan.line', { p: A.name(A.port(l.port)), b: A.fmt(l.balance) })), h('span', { class: 'sub' }, dl >= 0 ? t('loan.due', { d: dl, r: (l.rate * 100).toFixed(2) }) : t('loan.late'))),
-        h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.gold < 100, onClick: () => { R.repayLoan(l.id, 500); rerender(); } }, t('loan.repay', { n: 500 })), h('button', { class: 'btn sm', disabled: s.gold < Math.ceil(l.balance), onClick: () => { R.repayLoan(l.id, Math.ceil(l.balance)); A.audio.coin(); rerender(); } }, t('loan.repayAll'))));
+        h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.gold < 100, onClick: () => { R.repayLoan(l.id, 500); A.audio.coin(); rerender(); } }, t('loan.repay', { n: 500 })), h('button', { class: 'btn sm', disabled: s.gold < 100, onClick: () => { R.repayLoan(l.id, 1000); A.audio.coin(); rerender(); } }, t('loan.repay', { n: 1000 })), h('button', { class: 'btn sm', disabled: s.gold < 100 || s.gold >= Math.ceil(l.balance), onClick: () => { R.repayLoan(l.id, s.gold); A.audio.coin(); rerender(); } }, t('loan.repayMax')), h('button', { class: 'btn sm', disabled: s.gold < Math.ceil(l.balance), onClick: () => { R.repayLoan(l.id, Math.ceil(l.balance)); A.audio.coin(); rerender(); } }, t('loan.repayAll'))));
     })] : null;
     return h('div', { class: 'scr list pad' }, p && p.id === 'colombo' ? townView() : head, p ? escortCard() : null,
       p ? [h('h3', {}, t('mayor.news')), news] : null,
