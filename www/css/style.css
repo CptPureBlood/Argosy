@@ -177,3 +177,4 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 .modal.intro .iscene{width:100%;max-height:34dvh;object-fit:cover;border:2px solid #3b2a17;margin-bottom:8px}
 .modal.intro .mtop{display:flex;gap:10px;align-items:center}.modal.intro .mustafa{width:64px;height:64px;object-fit:cover;border:2px solid #3b2a17;background:#d9c79a}
 .modal.intro .info{display:flex;flex-direction:column}
+.modal.intro .bubble{min-height:7.2em}

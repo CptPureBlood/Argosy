@@ -392,8 +392,8 @@
     const back = h('div', { class: 'modalback' }, h('div', { class: 'modal intro' }, scene,
       h('div', { class: 'mtop' }, h('img', { class: 'mustafa', src: 'img/mustafa.png', onError: (e) => { e.target.style.visibility = 'hidden'; } }), h('div', { class: 'info' }, h('b', {}, 'Steel Mustafa'), h('span', { class: 'sub' }, t('intro.role')))), bubble, h('div', { class: 'mbtns' }, skip, btn)));
     const close = () => { if (endType) endType(); A.audio.voiceStop(); back.remove(); done && done(); };
-    const show = () => { scene.style.display = 'none'; scene.onload = () => { scene.style.display = 'block'; }; scene.onerror = () => { scene.style.display = 'none'; }; scene.src = 'img/intro_' + Math.min(i + 1, 4) + '.png';
-      btn.textContent = i === pages.length - 1 ? t('intro.start') : t('intro.next'); if (endType) endType(); endType = U.typeText(bubble, t('intro.' + pages[i]), 3); };
+    const show = () => { scene.style.display = 'none'; scene.onload = () => { scene.style.display = 'block'; }; scene.onerror = () => { scene.style.display = 'none'; }; scene.src = 'img/intro_' + Math.min(i + 1, 4) + '.jpg';
+      btn.textContent = i === pages.length - 1 ? t('intro.start') : t('intro.next'); if (endType) endType(); endType = U.typeText(bubble, t('intro.' + pages[i]), 5, null, 22); };
     btn.onclick = () => { if (i < pages.length - 1) { i++; show(); } else close(); }; skip.onclick = close;
     $('overlay').append(back); show();
   };
@@ -407,8 +407,8 @@
   }
 
   // typewriter text: faster than reading speed, with the cello mumble while it flows
-  U.typeText = function (el, text, voice, done) {
-    const cps = 62; const t0 = Date.now(); let fin = false;
+  U.typeText = function (el, text, voice, done, speed) {
+    const cps = speed || 62; const t0 = Date.now(); let fin = false;
     const end = () => { if (fin) return; fin = true; clearInterval(iv); el.textContent = text; A.audio.voiceStop(); done && done(); };
     A.audio.voiceStart(voice);
     const iv = setInterval(() => { if (!el.isConnected) { clearInterval(iv); fin = true; A.audio.voiceStop(); return; } const n = Math.floor((Date.now() - t0) / 1000 * cps); if (n >= text.length) end(); else el.textContent = text.slice(0, n); }, 30);

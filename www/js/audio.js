@@ -201,17 +201,18 @@
   };
   AU.gullsStop = function () { ambOff('amb_harbor'); synth.gullsStop(); };
   // ---- sample-based NPC chatter: 5 voices from thin to deep, built from the cut mumble syllables
-  const VP = [{ rate: 1.38, lp: 5200, vol: 0.9 }, { rate: 1.16, lp: 4200, vol: 0.95 }, { rate: 1.0, lp: 3600, vol: 1 }, { rate: 0.83, lp: 2800, vol: 1.05 }, { rate: 0.68, lp: 2200, vol: 1.1 }];
+  const VP = [{ rate: 1.38, lp: 5200, vol: 0.9 }, { rate: 1.16, lp: 4200, vol: 0.95 }, { rate: 1.0, lp: 3600, vol: 1 }, { rate: 0.83, lp: 2800, vol: 1.05 }, { rate: 0.68, lp: 2200, vol: 1.1 }, { rate: 0.5, lp: 1500, vol: 1.25, gap: 190 }];
   const synthVoiceStart = AU.voiceStart, synthVoiceStop = AU.voiceStop; let chat = null;
+  const synthStart = (i) => synthVoiceStart(Math.min(4, i));
   AU.voiceStart = function (idx) {
-    const n = nVoice(); if (!ok() || n < 6) return synthVoiceStart(idx); AU.voiceStop(true); const P = VP[((idx % 5) + 5) % 5]; const V = { on: true, t: null, nodes: [] }; chat = V;
+    const n = nVoice(); if (!ok() || n < 6) return synthStart(idx); AU.voiceStop(true); const P = VP[idx === 5 ? 5 : ((idx % 5) + 5) % 5]; const V = { on: true, t: null, nodes: [] }; chat = V;
     let prev = 0;
     const next = () => {
       if (!V.on) return; let k = 1 + Math.floor(Math.random() * n); if (k === prev) k = (k % n) + 1; prev = k; const b = buf['voice_' + k]; const r = P.rate * rnd(0.93, 1.07);
       const pl = AU.play(b, { vol: 0.5 * P.vol, rate: r, lp: P.lp, pan: 0 }); if (pl) V.nodes.push(pl);
       let dur = b.duration / r;
       if (Math.random() < 0.22) { const k2 = 1 + Math.floor(Math.random() * n); const b2 = buf['voice_' + k2]; const p2 = AU.play(b2, { vol: 0.22 * P.vol, rate: r * (Math.random() < 0.5 ? 1.5 : 0.75), lp: P.lp, delay: rnd(0.03, 0.12) }); if (p2) V.nodes.push(p2); }
-      V.t = setTimeout(next, Math.max(40, dur * 1000 - 30 + rnd(10, 130)));
+      V.t = setTimeout(next, Math.max(40, dur * 1000 - 30 + rnd(10, 130) + (P.gap ? rnd(P.gap * 0.6, P.gap * 1.4) : 0)));
     };
     next();
   };
