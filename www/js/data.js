@@ -51,14 +51,15 @@
 
   A.ESCORTS = {
     light: { id: 'light', n: { en: 'Light escort', tr: 'Hafif eskort' }, type: 'caravel', cannons: 3, hull: 60, crew: 12, exp: 3, speed: 7.5, cost: 300 },
-    war: { id: 'war', n: { en: 'War galley', tr: 'Savaş kadırgası' }, type: 'galley', cannons: 8, hull: 95, crew: 32, exp: 4, speed: 8.0, cost: 950 },
+    war: { id: 'war', n: { en: 'War galley', tr: 'Savaş kadırgası' }, type: 'galley', cannons: 8, hull: 95, crew: 32, exp: 4, speed: 8.0, cost: 1000 },
+    grand: { id: 'grand', n: { en: 'War galleon', tr: 'Savaş galyonu' }, type: 'galleon', cannons: 14, hull: 150, crew: 50, exp: 5, speed: 6.5, cost: 3000 },
   };
 
   A.SHIP_NAMES = ['Santa Lucia', 'Stella Maris', 'Aurora', 'La Sirena', 'San Marco', 'Fortuna', 'Delfino', 'Tramontana', 'Il Leone', 'Gabbiano', 'Zephyr', 'Alcyone', 'Meltem', 'Bora', 'Sirocco', 'Levante'];
   A.PIRATE_NAMES = ['Black Gull', 'Red Corsair', 'Sea Wolf', 'Barbary Rose', 'Night Heron', 'Sable Fox', 'Iron Tide', 'Crimson Crab'];
 
   A.C = {
-    MAX_FLEET: 6, START_GOLD: 2000, NM_PER_KNOT_DAY: 19.2, SAVE_KEY: 'argosy_save_v2', LANG_KEY: 'argosy_lang',
+    MAX_FLEET: 6, START_GOLD: 600, NM_PER_KNOT_DAY: 19.2, SAVE_KEY: 'argosy_save_v2', LANG_KEY: 'argosy_lang',
     UPKEEP_PER_CREW: 0.35, REPAIR_PER_HULL: 2.2, CREW_COST: 20, CANNON_COST: 140, INSURE_RATE: 0.04, INSURE_PAYOUT: 0.75,
     LON_MIN: -10, LON_MAX: 125, LAT_MIN: -9.5, LAT_MAX: 47.5, GRID: 0.25,
   };

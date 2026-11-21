@@ -21,6 +21,15 @@ ok(vr > 900 && vr < 1700, 'Venice-Alexandria distance plausible: ' + Math.round(
 // ---- new game / market / trade
 const S = R.newGame();
 ok(S.ships.length === 1 && S.gold === A.C.START_GOLD, 'new game starts with one ship and starting gold');
+// Colombo starts ruined: no trade there until the market is repaired
+ok(S.port === 'colombo' && !R.townBuilt('market'), 'starts in ruined Colombo');
+ok(!R.buy('spice', 1).ok && !R.sell('spice', 1).ok, 'no trade in ruined market');
+{ const sv = JSON.stringify(S); S.gold = 99999; S.cargo = { timber: 100, cloth: 100, silk: 100, iron: 100, marble: 100, wool: 100, glass: 100, gems: 100 };
+  ok(!R.townRepair('inn') || true, 'repair call'); ok(R.townBuilt('inn') && R.fleetLimit() === 3 && R.townTax() === 100, 'inn repaired: fleet 3, tax 100');
+  R.townRepair('market'); R.townRepair('yard'); R.townRepair('estate'); ok(R.townCount() === 4 && R.fleetLimit() === 6 && A.port('colombo').yard, 'all repaired: fleet 6, yard open');
+  const gb = S.gold; S.day = 29; R.advanceDay(); ok(S.gold <= gb - R.townTax(), 'monthly tax charged');
+  Object.assign(S, JSON.parse(sv)); S.town = { inn: false, market: false, yard: false, estate: false }; R.syncTown(); }
+S.port = 'venice'; S.gold = A.C.START_GOLD;
 const g0 = S.gold;
 const b = R.buy('glass', 5);
 ok(b.ok && S.cargo.glass === 5 && S.gold < g0, 'buy works');
@@ -48,7 +57,7 @@ ok(R.hireCrew(cv.id, 5) === 5, 'hire crew');
   const sp0 = R.shipSpeed(cv); ok(R.upgrade(cv.id, 'sail') && R.shipSpeed(cv) > sp0, 'sail upgrade raises speed');
   const cap0 = R.capOf(cv); ok(R.upgrade(cv.id, 'hold') && R.capOf(cv) > cap0, 'hold upgrade raises capacity');
   ok(R.renameShip(cv.id, 'Test Ship') && cv.name === 'Test Ship', 'rename ship');
-  ok(R.fleetLimit() === 3, 'fleet limit starts at 3');
+  ok(R.fleetLimit() === 2, 'fleet limit starts at 2 (town ruined)');
   S.cargo = {}; S.gold = 20000; ok(R.whRent(0) && R.whInfo().active, 'rent warehouse');
   S.cargo.salt = 10; ok(R.whPut('salt', 6) === 6 && R.whInfo().goods.salt === 6, 'store goods'); ok(R.whTake('salt', 6) === 6, 'take goods');
   ok(R.thBuy() && !!R.thAt(), 'build trading house'); for (let i = 0; i < 5; i++) R.advanceDay(); ok(R.thCount(R.thAt()) > 0, 'trading house produces'); ok(R.thCollect() > 0, 'collect production');
@@ -68,8 +77,7 @@ S.port = 'venice';
   A.SEA_EVENTS.forEach((e) => e.o.forEach((o, i) => { try { sv.gold = 500; R.seaApply(e.id, i); } catch (x) { okAll = false; console.error(e.id, x.message); } }));
   ok(okAll, 'all sea event options apply'); Object.keys(sv).forEach((k) => { delete sv[k]; }); Object.assign(sv, JSON.parse(bak)); }
 // ---- escort, insurance, voyage
-ok(R.hireEscort('light') && S.escortShip, 'hire escort');
-R.cancelEscort();
+ok(R.hireEscort('light') && S.escortShip, 'hire escort'); R.cancelEscort(); S.gold = 5000; ok(R.hireEscort('grand') && S.escortShip.cannons === 14, 'hire grand escort'); R.cancelEscort();
 const est = R.estimate('athens');
 ok(est.days > 0 && est.nm > 200, 'estimate Athens ' + est.days + ' days ' + Math.round(est.nm) + ' nm');
 
@@ -90,7 +98,7 @@ function bot(days) {
     }); });
     if (!best) { R.rest(); continue; }
     R.buy(best.g, 999);
-    const sv = R.startVoyage(best.d, { insure: Math.random() < 0.5 && s.gold >= R.insuranceCost() });
+    const sv = R.startVoyage(best.d, {});
     if (!sv.ok) { R.rest(); continue; }
     let arrived = false, lost = false;
     while (!arrived && !lost) {

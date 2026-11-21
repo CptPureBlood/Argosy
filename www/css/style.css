@@ -168,3 +168,12 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 .xbtn { margin-left: auto; width: 30px; height: 30px; border: 2px solid #5a3a1c; background: #f3e6c0; border-radius: 6px; font-size: 15px; line-height: 1; color: #5a3a1c; flex: none; } .sh1 { align-items: center !important; } .sbody.hint { position: relative; } .sbody.hint .xbtn { position: absolute; right: 10px; top: 8px; }
 
 .cfire { position: relative; flex: none; width: 82px; height: 82px; padding: 0; border: 0; background: none; margin: -14px 6px 0; } .cfire img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; pointer-events: none; } .cfire:active img { transform: scale(.92); filter: brightness(.8); } .cfire .ftxt { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; text-shadow: 0 0 3px #000, 0 0 3px #000; pointer-events: none; padding-left: 22px; }
+
+.card.town .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.tb{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;background:#efe2bd;border:2px solid #3b2a17;text-align:center}
+.tb.ok{background:#dfe9c4}.tb .bimg,.card.ruin .bimg{image-rendering:auto;object-fit:contain;background:#d9c79a}
+.tb .cost{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;font-size:12px}.gl.lack{color:#a3281c}
+.card.ruin{text-align:center}.card.ruin .bimg{margin:0 auto;display:block}
+.modal.intro .iscene{width:100%;max-height:34dvh;object-fit:cover;border:2px solid #3b2a17;margin-bottom:8px}
+.modal.intro .mtop{display:flex;gap:10px;align-items:center}.modal.intro .mustafa{width:64px;height:64px;object-fit:cover;border:2px solid #3b2a17;background:#d9c79a}
+.modal.intro .info{display:flex;flex-direction:column}

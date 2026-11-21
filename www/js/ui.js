@@ -85,7 +85,8 @@
       h('button', { onClick: () => { R.rest(); A.audio.gullsStart(); A.toast(t('port.rested')); rerender(); } }, t('port.rest')),
       h('button', { class: 'go', onClick: () => U.go('map') }, t('port.depart')));
     if (U.tab === 'yard' && !p.yard) U.tab = 'market';
-    return h('div', { class: 'scr port' }, head, tabs, U.tab === 'market' ? marketBody(p) : U.tab === 'tavern' ? tavernBody(p) : U.tab === 'estate' ? estateBody(p) : yardBody(p));
+    const body = U.tab === 'market' ? (R.ruined(p.id, 'market') ? ruinBody('market') : marketBody(p)) : U.tab === 'tavern' ? (R.ruined(p.id, 'inn') ? ruinBody('inn') : tavernBody(p)) : U.tab === 'estate' ? (R.ruined(p.id, 'estate') ? ruinBody('estate') : estateBody(p)) : yardBody(p);
+    return h('div', { class: 'scr port' }, head, tabs, body);
   }
 
   function marketBody(p) {
@@ -135,7 +136,7 @@
       const T = A.SHIPS[sh.type]; const rc = R.repairCost(sh); const mh = R.maxHull(sh), cm = R.crewMaxOf(sh); const open = U.upShip === sh.id;
       const rows = !open ? null : h('div', { class: 'uppanel' },
         h('div', { class: 'uprow' }, h('img', { class: 'px upic', src: 'img/ui_cannon.png' }), h('div', { class: 'info' }, h('b', {}, t('up.cannon') + ' ' + sh.cannons + '/' + T.cannons), h('span', { class: 'sub' }, t('up.cannon.d'))),
-          h('button', { class: 'btn sm', disabled: sh.cannons >= T.cannons || s.gold < C.CANNON_COST, onClick: () => { R.buyCannons(sh.id, 1); rerender(); } }, C.CANNON_COST)),
+          h('button', { class: 'btn sm', disabled: sh.cannons >= T.cannons || s.gold < R.cannonCost(), onClick: () => { R.buyCannons(sh.id, 1); rerender(); } }, R.cannonCost())),
         R.UP_KEYS.map((k) => {
           const lv = R.upLv(sh, k), c = R.upCost(sh, k), m = R.UPM[k][Math.min(3, lv + 1)];
           const pips = h('span', { class: 'pips' }, [1, 2, 3].map((i) => h('i', { class: i <= lv ? 'on' : '' })));
@@ -149,7 +150,7 @@
         h('div', { class: 'stats' }, stat('shield', Math.round(sh.hull) + '/' + mh), stat('crew', sh.crew + '/' + cm), stat('cannon', sh.cannons + '/' + T.cannons), stat('ship', R.capOf(sh))),
         h('div', { class: 'acts' },
           h('button', { class: 'btn sm', disabled: rc <= 0 || s.gold < rc, onClick: () => { R.repair(sh.id); rerender(); } }, t('yard.repair') + (rc > 0 ? ' ' + A.fmt(rc) : '')),
-          h('button', { class: 'btn sm', disabled: sh.crew >= cm || s.gold < C.CREW_COST, onClick: () => { R.hireCrew(sh.id, 5); rerender(); } }, t('yard.crew') + ' ' + C.CREW_COST * 5),
+          h('button', { class: 'btn sm', disabled: sh.crew >= cm || s.gold < R.crewCost(), onClick: () => { R.hireCrew(sh.id, 5); rerender(); } }, t('yard.crew') + ' ' + R.crewCost() * 5),
           h('button', { class: 'btn sm' + (open ? '' : ' ghost'), onClick: () => { U.upShip = open ? null : sh.id; rerender(); } }, t('yard.upg')),
           h('button', { class: 'btn sm ghost', disabled: s.ships.length <= 1, onClick: () => { if (R.sellShip(sh.id)) A.audio.coin(); rerender(); } }, t('yard.sell') + ' ' + A.fmt(R.shipSellValue(sh)))), rows);
     });
@@ -184,24 +185,18 @@
     const d = A.port(U.sel), est = R.estimate(U.sel);
     const baseDays = est.nm / ((R.fleetSpeed() || 5) * C.NM_PER_KNOT_DAY); const wr = baseDays / est.days;
     const windTxt = wr > 1.06 ? t('sheet.tail') : wr < 0.94 ? t('sheet.head') : t('sheet.crosswind');
-    const icost = R.cargoCount() > 0 ? R.insuranceCost() : 0;
-    if (icost === 0) U.insure = false;
     const skulls = est.risk === 'high' ? 3 : est.risk === 'mid' ? 2 : 1;
-    const esc = (id, label, cost) => h('button', { class: 'chipb' + ((s.escort || '') === id ? ' on' : ''), onClick: () => { R.cancelEscort(); if (id && !R.hireEscort(id)) A.toast(t('err.gold')); U.renderTop(); renderSheet(); } }, label + (cost ? ' · ' + cost : ''));
     sh.replaceChildren(h('div', { class: 'sbody' },
       h('div', { class: 'sh1' }, h('b', {}, A.name(d)), h('span', {}, t('sheet.days', { n: est.days }) + ' · ' + t('sheet.nm', { n: Math.round(est.nm) })), h('button', { class: 'xbtn', 'aria-label': 'close', onClick: () => { U.sel = null; selectDest(); } }, '✕')),
       h('div', { class: 'prow' }, d.p.map((g) => chip(g, 'p')), d.yard ? h('span', { class: 'badge' }, A.icon('anchor', 14), t('yard.badge')) : null),
       h('div', { class: 'sh2' }, h('span', {}, windTxt), h('span', { class: 'risk ' + est.risk }, [0, 1, 2].map((i) => h('span', { class: 'ic' + (i < skulls ? ' on' : ''), html: A.svg(A.ICONS.skull, 15) })), ' ' + t('risk.' + est.risk))),
-      h('div', { class: 'opts' },
-        h('button', { class: 'chipb' + (U.insure ? ' on' : ''), disabled: icost === 0, onClick: () => { U.insure = !U.insure; renderSheet(); } }, A.icon('shield', 14), ' ' + t('ins.label', { c: icost })),
-        h('span', { class: 'lbl' }, t('esc.label')), esc('', t('esc.none')), esc('light', A.name(A.ESCORTS.light), A.ESCORTS.light.cost), esc('war', A.name(A.ESCORTS.war), A.ESCORTS.war.cost)),
       h('button', { class: 'btn go big', onClick: () => depart(U.sel) }, t('sheet.sail'))));
   }
 
   function depart(id) {
-    const r = R.startVoyage(id, { insure: U.insure });
+    const r = R.startVoyage(id, {});
     if (!r.ok) { A.toast(t(r.err === 'gold' ? 'err.gold' : 'err.generic')); return; }
-    A.audio.gullsStop(); A.audio.seaStart(); U.insure = false; U.sel = null; A.map.sel = null; A.map.preview = null;
+    A.audio.gullsStop(); A.audio.seaStart(); U.sel = null; A.map.sel = null; A.map.preview = null;
     const s = S(); A.map.setShipDocked(s.voyage.from); A.map.follow = true; A.map.tk = 16;
     voy.paused = false; voy.busy = false; U.renderTop(); renderSheet(); setTimeout(voyTick, 500);
   }
@@ -367,6 +362,41 @@
       R.bankTotal() ? h('p', { class: 'sub' }, t('est.bank.all', { n: A.fmt(R.bankTotal()) })) : null);
     return h('div', { class: 'list yard' }, bankCard, whCard, thCard, fitCard);
   }
+  // ---- Colombo town (the player is the mayor here)
+  const bimg = (b, ok, size) => h('img', { class: 'bimg', width: size, height: size, src: 'img/town_' + b + (ok ? '_ok' : '_ruin') + '.png', onError: (e) => { e.target.style.visibility = 'hidden'; } });
+  function ruinBody(b) {
+    return h('div', { class: 'list yard' }, h('div', { class: 'card ruin' }, bimg(b, false, 160), h('h3', {}, t('town.b.' + b) + ' - ' + t('town.ruined')), h('p', { class: 'sub' }, t('town.ruin.hint'))));
+  }
+  function townView() {
+    const s = S();
+    const costLine = (d) => [h('span', { class: 'gl' }, A.icon('coin', 15), ' ' + A.fmt(d.gold)), Object.keys(d.goods).map((g) => h('span', { class: 'gl' + ((s.cargo[g] || 0) < d.goods[g] ? ' lack' : '') }, A.goodIcon(g, 15), ' ' + (s.cargo[g] || 0) + '/' + d.goods[g]))];
+    const cards = R.TOWN_ORDER.map((b) => {
+      const d = R.TOWN[b], ok = R.townBuilt(b);
+      return h('div', { class: 'tb' + (ok ? ' ok' : '') }, bimg(b, ok, 96), h('b', {}, t('town.b.' + b)),
+        ok ? h('span', { class: 'sub' }, t('town.tax', { n: d.tax })) : h('div', { class: 'cost' }, costLine(d)),
+        ok ? h('span', { class: 'sub' }, t('town.done')) : h('button', { class: 'btn sm', disabled: !R.townCan(b), onClick: () => { if (R.townRepair(b)) { A.audio.gong(); A.toast(t('town.fixed', { b: t('town.b.' + b) })); } rerender(); } }, t('town.repair')));
+    });
+    return h('div', { class: 'card town' }, h('h3', {}, t('town.title')), h('p', { class: 'sub' }, t('town.d', { n: R.townCount(), t: R.townTax() })), h('div', { class: 'tgrid' }, cards));
+  }
+  function escortCard() {
+    const s = S();
+    return h('div', { class: 'card' }, h('h3', {}, t('esc.title')), h('p', { class: 'sub' }, t('esc.d')),
+      h('div', { class: 'acts' }, ['light', 'war', 'grand'].map((id) => { const e = A.ESCORTS[id]; const on = s.escort === id;
+        return h('button', { class: 'btn sm' + (on ? ' go' : ''), disabled: !on && s.gold < e.cost && !s.escort, onClick: () => { const was = s.escort; R.cancelEscort(); if (was !== id && !R.hireEscort(id)) A.toast(t('err.gold')); else if (was !== id) A.audio.coin(); U.renderTop(); rerender(); } }, A.name(e) + ' ' + e.cost); })),
+      h('p', { class: 'sub' }, s.escort ? t('esc.on', { n: A.name(A.ESCORTS[s.escort]) }) : t('esc.off')));
+  }
+  U.introModal = function (done) {
+    const pages = [1, 2, 3, 4, 5]; let i = 0, endType = null;
+    const bubble = h('p', { class: 'bubble' }, ''); const scene = h('img', { class: 'iscene', src: '' });
+    const btn = h('button', { class: 'btn go' }, ''); const skip = h('button', { class: 'btn ghost' }, t('intro.skip'));
+    const back = h('div', { class: 'modalback' }, h('div', { class: 'modal intro' }, scene,
+      h('div', { class: 'mtop' }, h('img', { class: 'mustafa', src: 'img/mustafa.png', onError: (e) => { e.target.style.visibility = 'hidden'; } }), h('div', { class: 'info' }, h('b', {}, 'Steel Mustafa'), h('span', { class: 'sub' }, t('intro.role')))), bubble, h('div', { class: 'mbtns' }, skip, btn)));
+    const close = () => { if (endType) endType(); A.audio.voiceStop(); back.remove(); done && done(); };
+    const show = () => { scene.style.display = 'none'; scene.onload = () => { scene.style.display = 'block'; }; scene.onerror = () => { scene.style.display = 'none'; }; scene.src = 'img/intro_' + Math.min(i + 1, 4) + '.png';
+      btn.textContent = i === pages.length - 1 ? t('intro.start') : t('intro.next'); if (endType) endType(); endType = U.typeText(bubble, t('intro.' + pages[i]), 3); };
+    btn.onclick = () => { if (i < pages.length - 1) { i++; show(); } else close(); }; skip.onclick = close;
+    $('overlay').append(back); show();
+  };
   function tavernBody() {
     const s = S(); const list = R.tavern(s.port);
     return h('div', { class: 'list yard' },
@@ -403,6 +433,7 @@
   };
 
   U.mayorModal = function (portId) {
+    if (portId === 'colombo') { R.meet(portId); U.modal({ title: t('town.title'), body: h('div', {}, h('p', {}, t('town.mayor', { n: R.townCount() }))), buttons: [{ label: t('mayor.visit'), kind: 'go', onClick: () => U.go('quests') }, { label: t('mayor.ok'), kind: 'ghost' }] }); return; }
     const m = R.mayor(portId); if (!m) return; const first = !R.hasMet(portId); R.meet(portId);
     const evs = R.eventsAt(portId).map(R.eventText).slice(0, 2);
     const news = evs.map((e) => h('div', { class: 'news' }, h('b', {}, e.title), h('div', { class: 'sub' }, e.text)));
@@ -439,7 +470,7 @@
       return h('div', { class: 'card loan' + (dl < 0 ? ' late' : '') }, h('div', { class: 'info' }, h('b', {}, t('loan.line', { p: A.name(A.port(l.port)), b: A.fmt(l.balance) })), h('span', { class: 'sub' }, dl >= 0 ? t('loan.due', { d: dl, r: (l.rate * 100).toFixed(2) }) : t('loan.late'))),
         h('div', { class: 'acts' }, h('button', { class: 'btn sm', disabled: s.gold < 100, onClick: () => { R.repayLoan(l.id, 500); rerender(); } }, t('loan.repay', { n: 500 })), h('button', { class: 'btn sm', disabled: s.gold < Math.ceil(l.balance), onClick: () => { R.repayLoan(l.id, Math.ceil(l.balance)); A.audio.coin(); rerender(); } }, t('loan.repayAll'))));
     })] : null;
-    return h('div', { class: 'scr list pad' }, head,
+    return h('div', { class: 'scr list pad' }, p && p.id === 'colombo' ? townView() : head, p ? escortCard() : null,
       p ? [h('h3', {}, t('mayor.news')), news] : null,
       h('h3', {}, t('q.active') + ' (' + s.quests.length + '/3)'), s.quests.length ? s.quests.map((q) => questCard(q, true)) : h('p', { class: 'sub' }, t('q.none')),
       p ? [h('h3', {}, t('q.offers', { p: A.name(p) })), offers.length ? offers : h('p', { class: 'sub' }, t('q.noOffers')), h('h3', {}, t('loan.title')), loan] : null,
@@ -476,6 +507,7 @@
     U.screen = 'port'; U.renderNav(); U.go(S().voyage ? 'map' : 'port');
     if (S().voyage) U.resumeIfAtSea();
     setTimeout(() => A.audio.gong(), 250);
+    if (!S().introSeen) { setTimeout(() => U.introModal(() => { S().introSeen = true; R.save(); }), 600); return; }
     if (!S().voyage) setTimeout(() => { const pid = S().port; if (pid && (!R.hasMet(pid) || (fresh && R.eventsAt(pid).length))) U.mayorModal(pid); }, 900);
   }
   document.addEventListener('visibilitychange', () => { if (document.hidden && S()) R.save(); });

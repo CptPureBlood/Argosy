@@ -207,7 +207,7 @@
     order.forEach((p) => {
       const q = proj(p.lon, p.lat); if (q[0] < -80 || q[0] > w + 80 || q[1] < -40 || q[1] > h + 40) return;
       const sel = M.sel === p.id; const name = p.n[lang]; const here = S && S.port === p.id; const nameW = ctx.measureText(name).width + (p.yard ? fs + 3 : 0);
-      const showGoods = sel; const wantLabel = sel || here || p.yard || M.k >= FAR_K;
+      const showGoods = sel; const wantLabel = sel || here || p.yard || p.id === 'colombo' || M.k >= FAR_K;
       const bh = sel ? fs + 6 + 17 : fs + 4; const bwid = sel ? Math.max(nameW + 10, 3 * 17 + 6) : nameW + 6;
       const cand = sel ? [[q[0] + 24, q[1] - bh - 18], [q[0] - bwid - 24, q[1] - bh - 18], [q[0] + 24, q[1] + 16], [q[0] - bwid - 24, q[1] + 16]]
         : [[q[0] + 8, q[1] - bh / 2], [q[0] - bwid - 8, q[1] - bh / 2], [q[0] - bwid / 2, q[1] + 8], [q[0] - bwid / 2, q[1] - bh - 8]];
