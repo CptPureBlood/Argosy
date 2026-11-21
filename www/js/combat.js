@@ -128,9 +128,9 @@
   }
 
   let bgName = null; const BGS = ['bg_day1', 'bg_day2', 'bg_night1', 'bg_night2', 'bg_storm1', 'bg_storm2'];
-  const bgImg = () => { if (!bgName) { const S0 = R.S(); const st = S0 ? S0.wind.str : 1; const r = Math.random(); bgName = st > 2.3 || r < 0.12 ? 'bg_storm1' : r < 0.4 ? 'bg_night1' : 'bg_day1'; stormOn = bgName === 'bg_storm1'; flash = 0; nextBolt = 2 + Math.random() * 4; rain = []; for (let i = 0; i < 90; i++) rain.push({ x: Math.random(), y: Math.random(), v: 0.9 + Math.random() * 0.8 }); if (stormOn) { A.audio.ambOn && A.audio.ambOn('rain', 0.5); } } const i = (bgCache[bgName] = bgCache[bgName] || Object.assign(new Image(), { src: 'img/' + bgName + '.png' })); return i; }; const bgCache = {}, bgPix = {}; let stormOn = false, flash = 0, nextBolt = 5, rain = [];
+  const bgImg = () => { if (!bgName) { const S0 = R.S(); const st = S0 ? S0.wind.str : 1; const r = Math.random(); bgName = st > 2.3 || r < 0.12 ? 'bg_storm1' : r < 0.4 ? 'bg_night1' : 'bg_day1'; stormOn = bgName === 'bg_storm1'; flash = 0; nextBolt = 2 + Math.random() * 4; rain = []; for (let i = 0; i < 90; i++) rain.push({ x: Math.random(), y: Math.random(), v: 0.9 + Math.random() * 0.8 }); if (stormOn) { A.audio.ambOn && (A.audio.ambOn('rain', 0.55), A.audio.ambOn('storm_wind', 0.4)); } } const i = (bgCache[bgName] = bgCache[bgName] || Object.assign(new Image(), { src: 'img/' + bgName + '.png' })); return i; }; const bgCache = {}, bgPix = {}; let stormOn = false, flash = 0, nextBolt = 5, rain = [];
   function stormFx(dt) {
-    if (!stormOn) return; nextBolt -= dt; if (nextBolt <= 0) { flash = 1; nextBolt = 4 + Math.random() * 6; const b = A.audio.buf && A.audio.buf['thunder_' + (1 + Math.floor(Math.random() * 3))]; if (b) A.audio.play(b, { vol: 0.7, delay: 0.25 + Math.random() * 0.8 }); }
+    if (!stormOn) return; nextBolt -= dt; if (nextBolt <= 0) { flash = 1; nextBolt = 4 + Math.random() * 6; const b = A.audio.buf && A.audio.buf['thunder_' + (1 + Math.floor(Math.random() * 5))]; if (b) A.audio.play(b, { vol: 0.8, delay: 0.2 + Math.random() * 0.6, rate: 0.95 + Math.random() * 0.1 }); }
     flash = Math.max(0, flash - dt * 2.2);
     ctx.fillStyle = 'rgba(205,225,245,0.7)'; const sp = Math.max(1, Math.round(w / 195));
     rain.forEach((d) => { d.y += dt * d.v * 1.1; d.x -= dt * d.v * 0.22; if (d.y > 1) { d.y = -0.04; d.x = Math.random() * 1.2; } const px = Math.round(d.x * w / sp) * sp, py = Math.round(d.y * hh / sp) * sp; ctx.fillRect(px, py, sp, sp * 3); ctx.fillRect(px + sp, py + sp * 3, sp, sp); });
@@ -193,7 +193,7 @@
   }
 
   function finish() {
-    finished = true; A.audio.ambOff && A.audio.ambOff('battle_tail'); if (stormOn) { A.audio.ambOff && A.audio.ambOff('rain'); stormOn = false; } cancelAnimationFrame(raf); window.removeEventListener('resize', resize);
+    finished = true; A.audio.ambOff && A.audio.ambOff('battle_tail'); if (stormOn) { A.audio.ambOff && (A.audio.ambOff('rain'), A.audio.ambOff('storm_wind')); stormOn = false; } cancelAnimationFrame(raf); window.removeEventListener('resize', resize);
     root.remove();
     const res = R.finishCombat(c);
     onDone && onDone(res, c);
