@@ -232,7 +232,7 @@
     let pc = (0.025 + 0.28 * zone) * early * (S.escort ? ({ light: 0.85, war: 0.65, grand: 0.45 }[S.escort] || 0.85) : 1) * R.lookoutMod();
     if (v.total - v.travelled < 35) pc = 0;
     if (Math.random() < pc) events.push({ type: 'pirates', zone });
-    if (!events.some((e) => e.type === 'pirates') && v.total - v.travelled > 30 && R.seaPick && Math.random() < 0.10) events.push({ type: 'sea', id: R.seaPick() });
+    if (!events.some((e) => e.type === 'pirates') && v.total - v.travelled > 30 && R.seaPick && Math.random() < 0.04 && (S.day - (S.lastSeaEv || -99)) >= 7) { S.lastSeaEv = S.day; events.push({ type: 'sea', id: R.seaPick() }); }
     if (R.has('shipwright')) S.ships.forEach((sh) => { sh.hull = Math.min(T(sh.type).hull, sh.hull + T(sh.type).hull * 0.01); });
     const arrived = v.travelled >= v.total - 0.01;
     if (!events.some((e) => e.type === 'pirates' || e.type === 'sea')) R.save();

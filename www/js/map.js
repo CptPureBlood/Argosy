@@ -33,7 +33,7 @@
     M.cy = minY > maxY ? (CAM_LAT_MIN + C.LAT_MAX) / 2 : Math.max(minY, Math.min(maxY, M.cy));
     // the west of the image below ~11N is not real map: keep it out of view
     const bot = M.cy - vh / 2, left = M.cx - vw / 2;
-    if (bot < FAKE_LAT && left < FAKE_LON) { const need = h / (YS * (C.LAT_MAX - FAKE_LAT)); if (M.tk < need) M.tk = need; M.cy = Math.min(maxY, Math.max(M.cy, FAKE_LAT + vh / 2)); }
+    if (false && bot < FAKE_LAT && left < FAKE_LON) { const need = h / (YS * (C.LAT_MAX - FAKE_LAT)); if (M.tk < need) M.tk = need; M.cy = Math.min(maxY, Math.max(M.cy, FAKE_LAT + vh / 2)); }
   }
 
   M.init = function (wrap) {
@@ -79,7 +79,10 @@
     const a = A.port(idA), b = A.port(idB);
     const lo = Math.min(a.lon, b.lon), hi = Math.max(a.lon, b.lon), la = Math.min(a.lat, b.lat), ha = Math.max(a.lat, b.lat);
     const kx = (w - 90) / Math.max(2, hi - lo), ky = (h - 150) / (Math.max(1.5, ha - la) * YS);
-    M.tk = Math.max(8, Math.min(26, Math.min(kx, ky))); M.tcx = (lo + hi) / 2; M.tcy = (la + ha) / 2 - 0.4; M.follow = false;
+    M.follow = false;
+    // never auto-zoom. Only pan when the destination is near the middle of the view; far ports leave the camera alone
+    const q = proj(b.lon, b.lat), d = Math.hypot(q[0] - w / 2, q[1] - h / 2);
+    if (d < Math.min(w, h) * 0.42) { M.tcx = b.lon; M.tcy = b.lat; }
   };
   M.setShipDocked = function (portId) { const p = A.port(portId); M.ship = { lon: p.lon, lat: p.lat, heading: 90 }; M.vAnim = null; M.trail = []; M.needCenter = true; };
   // animate ship along its route from travelled a to b over ms

@@ -213,3 +213,6 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 .splash .seg { margin: 2px 0 6px; } .splash .btn.big { min-height: 52px; margin-top: 0; }
 
 .combatcv{touch-action:none}.cwind{background:rgba(44,29,14,.8);color:#f6ecd0;padding:4px 10px;border-radius:14px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:2px}.cwarrow{display:inline-block;transition:transform .6s linear;line-height:0}
+
+.mapscr{display:flex;flex-direction:column}.mapscr .mapwrap{position:relative;inset:auto;flex:1;min-height:0}.mapscr .sheet{position:relative;flex:none}
+.sbody.hint{padding:8px 36px 8px 12px;flex-direction:row;align-items:center;gap:10px;font-size:13px}.sbody.hint .legend{margin:0 0 0 auto}
