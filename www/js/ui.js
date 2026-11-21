@@ -20,7 +20,7 @@
   U.floatGold = function (txt, cls) {
     const el = h('span', { class: 'gfloat ' + cls }, txt); $('top').append(el); setTimeout(() => el.remove(), 1300);
   };
-  const stars = (rep) => h('span', { class: 'stars' }, [0, 1, 2, 3, 4].map((i) => h('span', { class: 'ic star' + (i < Math.floor(rep / 20) ? ' on' : '') , html: A.svg(A.ICONS.star, 14) })));
+  const stars = (rep) => h('span', { class: 'stars' }, [0, 1, 2, 3, 4].map((i) => h('img', { class: 'starimg', src: 'img/ui_star_' + (i < Math.floor(rep / 20) ? 'on' : 'off') + '.png', alt: '' })));
   const bar = (pct, cls) => h('span', { class: 'bar ' + (cls || '') }, h('i', { style: { width: Math.max(0, Math.min(100, pct)) + '%' } }));
   const chip = (g, kind) => h('span', { class: 'chip ' + kind, title: A.name(A.GOOD_BY_ID[g]) }, A.goodIcon(g, 15), h('b', {}, A.name(A.GOOD_BY_ID[g])));
   const moraleKey = (m) => 'morale.' + (m >= 80 ? 0 : m >= 60 ? 1 : m >= 40 ? 2 : m >= 20 ? 3 : 4);
@@ -72,7 +72,9 @@
   function renderPort() {
     const s = S(), p = A.port(s.port);
     const skull = s.skulls.indexOf(p.id) >= 0;
+    const REG = { tripoli: 'arab', alexandria: 'arab', beirut: 'arab', jeddah: 'arab', aden: 'arab', hormuz: 'arab', calicut: 'india', colombo: 'india', malacca: 'sea', ayutthaya: 'sea', manila: 'sea', canton: 'china' };
     const head = h('div', { class: 'phead' },
+      h('div', { class: 'pbanner', style: { backgroundImage: 'url(img/port_' + (REG[p.id] || 'med') + '.jpg)' } }),
       h('div', { class: 'pname' }, h('h1', {}, A.name(p)), p.yard ? h('span', { class: 'badge' }, A.icon('anchor', 15), t('yard.badge')) : null, skull ? h('span', { class: 'badge bad' }, A.icon('skull', 15), t('port.pirates')) : null),
       h('div', { class: 'prow' }, h('span', { class: 'lbl' }, t('port.produces')), p.p.map((g) => chip(g, 'p'))),
       h('div', { class: 'prow' }, h('span', { class: 'lbl' }, t('port.needs')), p.d.map((g) => chip(g, 'd'))),
@@ -164,7 +166,7 @@
     const s = S();
     if (!U.mapWrap) { U.mapWrap = h('div', { class: 'mapwrap' }); A.map.init(U.mapWrap); A.map.onSelect = (id) => { if (S().voyage) return; U.sel = id; selectDest(); }; }
     const root = h('div', { class: 'scr mapscr' }, U.mapWrap, h('div', { class: 'sheet', id: 'sheet' }));
-    queueMicrotask(() => { A.map.resize(); renderSheet(); if (!s.voyage && !A.map.ship && s.port) A.map.setShipDocked(s.port); });
+    queueMicrotask(() => { A.map.resize(); renderSheet(); if (!s.voyage && !A.map.ship && s.port) A.map.setShipDocked(s.port); if (A.map.needCenter && !s.voyage && s.port) { const pp = A.port(s.port); A.map.needCenter = false; A.map.cx = A.map.tcx = pp.lon; A.map.cy = A.map.tcy = pp.lat; A.map.k = A.map.tk = Math.max(A.map.tk, 15); } });
     return root;
   }
   function selectDest() {
@@ -495,7 +497,7 @@
     const has = R.hasSave();
     const langs = h('div', { class: 'seg' }, ['en', 'tr'].map((l) => h('button', { class: A.lang === l ? 'on' : '', onClick: () => { A.setLang(l); U.splash(); } }, l === 'en' ? 'English' : 'Türkçe')));
     $('splash')?.remove();
-    const el = h('div', { id: 'splash', class: 'splash' }, h('div', { class: 'sbox' }, h('div', { class: 'logo', html: A.svg(A.ICONS.ship, 56) }), h('h1', {}, 'ARGOSY'), h('p', { class: 'tag' }, t('splash.tag')), langs,
+    const el = h('div', { id: 'splash', class: 'splash' }, h('div', { class: 'sbox' }, h('h1', {}, 'MARE NOSTRUM'), h('p', { class: 'tag' }, t('splash.tag')), langs,
       has ? h('button', { class: 'btn go big', onClick: () => start(true) }, t('splash.continue')) : null,
       h('button', { class: 'btn big' + (has ? ' ghost' : ' go'), onClick: () => { A.audio.unlock(); U.profileModal((pf) => { if (has) R.reset(); R.newGame(pf); A.audio.quill && A.audio.quill(); start(false, true); }); } }, t('splash.new'))));
     document.body.append(el);

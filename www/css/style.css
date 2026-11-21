@@ -171,11 +171,11 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 
 .card.town .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 .tb{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px;background:#efe2bd;border:2px solid #3b2a17;text-align:center}
-.tb.ok{background:#dfe9c4}.tb .bimg,.card.ruin .bimg{image-rendering:auto;object-fit:contain;background:#d9c79a}
+.tb.ok{background:#dfe9c4}.tb .bimg,.card.ruin .bimg{image-rendering:auto;object-fit:contain;background:none}
 .tb .cost{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;font-size:12px}.gl.lack{color:#a3281c}
 .card.ruin{text-align:center}.card.ruin .bimg{margin:0 auto;display:block}
 .modal.intro .iscene{width:100%;max-height:34dvh;object-fit:cover;border:2px solid #3b2a17;margin-bottom:8px}
-.modal.intro .mtop{display:flex;gap:10px;align-items:center}.modal.intro .mustafa{width:64px;height:64px;object-fit:cover;border:2px solid #3b2a17;background:#d9c79a}
+.modal.intro .mtop{display:flex;gap:10px;align-items:center}.modal.intro .mustafa{width:64px;height:64px;object-fit:cover;border:2px solid #3b2a17;background:none}
 .modal.intro .info{display:flex;flex-direction:column}
 .modal.intro .bubble{min-height:7.2em}
 /* ornate image buttons */
@@ -189,3 +189,25 @@ button:not(:disabled):active { transform: translateY(2px); box-shadow: none; }
 .btn.sm { min-height: 44px; font-size: 13.5px; } .btn.big { min-height: 58px; }
 .xbtn { border: 0 !important; background: url(../img/btn_x.png) center/contain no-repeat !important; color: transparent !important; width: 34px; height: 32px; border-radius: 0 !important; font-size: 0 !important; }
 .flagbtn{padding:2px 0 !important}.flagimg{display:block;margin:0 auto;image-rendering:auto}.flaggrid{grid-template-columns:repeat(4,1fr)}.company .flagimg{display:inline-block;vertical-align:middle}
+/* ===== art pass: top bar, nav, frames, parchment, banner, splash ===== */
+.gd { image-rendering: auto !important; object-fit: contain; }
+.starimg { height: 15px; width: auto; vertical-align: middle; margin-right: 1px; }
+#top { border: 0 !important; border-image: url(../img/ui_bar_top.png) 70 fill / 13px stretch; border-style: solid; border-width: 13px; background: none !important; padding: 0 6px; }
+#top .trow { font-size: 14.5px; } #top .trow.small { margin-top: 1px; }
+#screen { background: linear-gradient(rgba(243,231,198,.62), rgba(243,231,198,.62)), url(../img/bg_parch.jpg) center / cover; }
+.scr, .scr.port, .scr.list { background: transparent; }
+#nav { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); height: calc(88px + env(safe-area-inset-bottom)); padding: 0 8.33% env(safe-area-inset-bottom); border: 0 !important; background: url(../img/ui_nav.png) center top / 100% auto no-repeat, #2b1a10 !important; }
+.navb { position: relative; height: 88px; padding: 24px 0 0 !important; gap: 20px; justify-content: flex-start; border: 0 !important; color: #e9d9ae !important; font-size: 11px; text-shadow: 0 1px 0 #000a; }
+.navb.on { color: #ffe08a !important; border: 0 !important; }
+.navb.on::before { content: ''; position: absolute; left: 50%; top: 2px; width: 70px; height: 70px; transform: translateX(-50%); background: url(../img/ui_nav_glow.png) center / contain no-repeat; pointer-events: none; }
+.navb:active { background: none; }
+.card { border: 12px solid transparent !important; border-image: url(../img/ui_frame_card.png) 70 fill / 12px stretch !important; background: none !important; box-shadow: none !important; padding: 2px 4px; }
+.card.ruin, .card.town { padding: 4px 6px; }
+.modal { border: 20px solid transparent !important; border-image: url(../img/ui_frame_modal.png) 105 fill / 20px stretch !important; background: none !important; box-shadow: 0 8px 0 rgba(0,0,0,.25) !important; padding: 2px 4px 2px; }
+.pbanner { height: 104px; background: center / cover no-repeat; border: 3px solid #3b2a17; box-shadow: inset 0 0 0 2px #c9a24f; margin-bottom: 6px; }
+/* splash */
+.splash { background: url(../img/splash.jpg) center bottom / cover no-repeat, #e8cf9c !important; display: flex; align-items: flex-start; justify-content: center; }
+.splash .sbox { background: none !important; border: 0 !important; box-shadow: none !important; width: 100%; max-width: 360px; padding: 34px 18px 0; text-align: center; }
+.splash h1 { font-family: 'Special Elite', Georgia, serif; font-size: 34px; letter-spacing: 2px; color: #3b2410; text-shadow: 0 1px 0 #f6e8c0, 0 2px 4px #0003; margin-bottom: 2px; }
+.splash .tag { margin: 0 0 6px; color: #5a3c1c; }
+.splash .seg { margin: 2px 0 6px; } .splash .btn.big { min-height: 52px; margin-top: 0; }

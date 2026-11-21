@@ -81,7 +81,7 @@
     const kx = (w - 90) / Math.max(2, hi - lo), ky = (h - 150) / (Math.max(1.5, ha - la) * YS);
     M.tk = Math.max(8, Math.min(26, Math.min(kx, ky))); M.tcx = (lo + hi) / 2; M.tcy = (la + ha) / 2 - 0.4; M.follow = false;
   };
-  M.setShipDocked = function (portId) { const p = A.port(portId); M.ship = { lon: p.lon, lat: p.lat, heading: 90 }; M.vAnim = null; M.trail = []; };
+  M.setShipDocked = function (portId) { const p = A.port(portId); M.ship = { lon: p.lon, lat: p.lat, heading: 90 }; M.vAnim = null; M.trail = []; M.needCenter = true; };
   // animate ship along its route from travelled a to b over ms
   M.animateVoyage = function (route, a, b, ms) { M.vAnim = { route, a, b, t: 0, ms }; };
   M.shipAt = (route, d) => { const p = W.posAt(route, d); M.ship = { lon: p.lon, lat: p.lat, heading: p.heading }; };

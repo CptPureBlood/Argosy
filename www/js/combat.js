@@ -6,7 +6,7 @@
   const rnd = (a, b) => a + Math.random() * (b - a);
 
   K.start = function (pirates, opts, done) {
-    opts = opts || {}; onDone = done; c = R.newCombat(pirates);
+    opts = opts || {}; onDone = done; c = R.newCombat(pirates); bgName = null;
     time = 0; projs = []; parts = []; floats = []; vis = {}; pos = {}; shake = 0; speed = 1; overT = 0; finished = false; lastBoom = 0;
     c.p.concat(c.e).forEach((s) => { vis[s.id] = { hull: s.hull, max: (s._side === 'p' && R.maxHull) ? R.maxHull(s) : s.hull, sink: 0, sinking: false, flash: 0, phase: Math.random() * 6 }; });
     if (opts.enemyVolley) c.e.forEach((s) => s._cd.forEach((_, i) => { s._cd[i] = Math.min(s._cd[i], 0.2 + i * 0.15); }));
@@ -37,7 +37,7 @@
   }
 
   const FXI = {}; const fx = (n) => (FXI[n] = FXI[n] || Object.assign(new Image(), { src: 'img/' + n + '.png' }));
-  ['muzzle','boom1','boom2','boom3','hit','splash1','splash2','splash3','smoke1','smoke2','smoke3','fire1','fire2','fire3','splinters','ball','tear','ripple','sparkle'].forEach((n) => fx('fx_' + n));
+  ['muzzle','splinters','ball','tear','ripple','sparkle','smk1','smk2','smk3','smk4','smk5','smk6','spl1','spl2','spl3','spl4','spl5','spl6','spk1','spk2','spk3','spk4','spk5','spk6','fir1','fir2','fir3','fir4','fir5','fir6','bub1','bub2','bub3','bub4','bub5','bub6'].forEach((n) => fx('fx_' + n));
   function layout() {
     [['p', c.p, 0.76, 1], ['e', c.e, 0.30, -1]].forEach(([side, arr, fy, dir]) => {
       const n = arr.length; const sp = (w * 0.94) / Math.max(1, n); const px = Math.min(0.40, sp * 0.95 / 340, hh * 0.2 / 234);
@@ -59,7 +59,7 @@
         let tx, ty; if (ev.hit) { tx = pb.x + (Math.random() - 0.5) * pb.hl * 1.1; ty = pb.y - pb.hg * (0.12 + Math.random() * 0.4); }
         else { tx = pb.x + (Math.random() - 0.5) * pb.hl * 1.8; ty = pb.y + (Math.random() < 0.5 ? -1 : 1) * (3 + Math.random() * 22); }
         projs.push({ sx: sx0, sy: sy0, tx, ty, t: 0, dur: 1.15 + Math.random() * 0.35, ev, tid: b.id, trail: [] });
-        parts.push({ k: 'spr', f: ['fx_muzzle'], x: sx0 + pa.dir * 6, y: sy0, sz: pa.wd * 0.22, life: 0, max: 0.18 }); for (let i = 0; i < 3; i++) parts.push({ k: 'spr', f: ['fx_smoke1', 'fx_smoke2', 'fx_smoke3'], x: sx0 + pa.dir * (8 + i * 5), y: sy0 - i * 3, vx: pa.dir * rnd(4, 14), vy: -rnd(6, 16), sz: pa.wd * rnd(0.12, 0.2), life: 0, max: rnd(0.9, 1.6) });
+        parts.push({ k: 'spr', f: ['fx_muzzle'], x: sx0 + pa.dir * 6, y: sy0, sz: pa.wd * 0.22, life: 0, max: 0.18 }); for (let i = 0; i < 3; i++) parts.push({ k: 'spr', f: ['fx_smk1', 'fx_smk2', 'fx_smk3', 'fx_smk4', 'fx_smk5', 'fx_smk6'], x: sx0 + pa.dir * (8 + i * 5), y: sy0 - i * 3, vx: pa.dir * rnd(4, 14), vy: -rnd(6, 16), sz: pa.wd * rnd(0.12, 0.2), life: 0, max: rnd(0.9, 1.6) });
         if (time - lastBoom > 0.07) { A.audio.cannon(a._side === 'p' ? 1 : 0.7); lastBoom = time; }
       } else if (ev.kind === 'board') {
         const tp = pos[ev.target]; if (tp) floats.push({ x: tp.x, y: tp.y - tp.bw * 1.6, txt: ev.ok ? t('combat.boarded') : t('combat.lostCrew', { n: ev.lost }), col: ev.ok ? '#2f6b3a' : '#a02a1a', t: 0, big: true });
@@ -73,15 +73,15 @@
     const tgt = find(p.tid); const v = vis[p.tid]; const pp = pos[p.tid]; if (!tgt || !v || !pp) return;
     if (p.ev.hit) {
       v.hull = Math.max(0, v.hull - (p.ev.dmg || 0)); v.flash = 1;
-      parts.push({ k: 'spr', f: ['fx_hit', 'fx_boom1', 'fx_boom2', 'fx_boom3'], x: p.tx, y: p.ty, sz: pp.wd * 0.3, life: 0, max: 0.55 }); v.shk = 1; v.hits = (v.hits || 0) + 1; for (let i = 0; i < 9; i++) parts.push({ k: 'spark', x: p.tx, y: p.ty, vx: rnd(-70, 70), vy: rnd(-90, 20), r: rnd(1, 2.4), life: 0, max: rnd(0.3, 0.6) });
+      parts.push({ k: 'spr', f: ['fx_spk1', 'fx_spk2', 'fx_spk3', 'fx_spk4', 'fx_spk5', 'fx_spk6'], x: p.tx, y: p.ty, sz: pp.wd * 0.34, life: 0, max: 0.6 }); v.shk = 1; v.hits = (v.hits || 0) + 1; for (let i = 0; i < 9; i++) parts.push({ k: 'spark', x: p.tx, y: p.ty, vx: rnd(-70, 70), vy: rnd(-90, 20), r: rnd(1, 2.4), life: 0, max: rnd(0.3, 0.6) });
       parts.push({ k: 'spr', f: ['fx_splinters'], x: p.tx, y: p.ty, vx: rnd(-20, 20), vy: -rnd(20, 40), sz: pp.wd * 0.16, life: 0, max: 0.7 });
       floats.push({ x: p.tx, y: p.ty - 6, txt: '-' + Math.max(1, Math.round(p.ev.dmg || 1)), col: tgt._side === 'p' ? '#a02a1a' : '#fff3d0', t: 0 });
       if (tgt._side === 'p') shake = Math.max(shake, 5);
       A.audio.hit(p.ev.sunk);
       if (p.ev.cannonLost) floats.push({ x: pp.x, y: pp.y - pp.bw * 1.6, txt: t('combat.cannonLost'), col: '#a02a1a', t: 0 });
-      if (p.ev.sunk) { A.audio.sink(); v.sinking = true; floats.push({ x: pp.x, y: pp.y - pp.bw * 2, txt: t('combat.sunk'), col: '#a02a1a', t: 0, big: true }); say(t('combat.sunkLog', { n: tgt.name })); for (let i = 0; i < 14; i++) parts.push({ k: 'bubble', x: pp.x + rnd(-pp.hl, pp.hl), y: pp.y + rnd(-pp.bw, pp.bw), vx: rnd(-8, 8), vy: rnd(-30, -10), r: rnd(2, 5), life: 0, max: rnd(0.8, 1.6) }); }
+      if (p.ev.sunk) { A.audio.sink(); v.sinking = true; floats.push({ x: pp.x, y: pp.y - pp.bw * 2, txt: t('combat.sunk'), col: '#a02a1a', t: 0, big: true }); say(t('combat.sunkLog', { n: tgt.name })); for (let i = 0; i < 5; i++) parts.push({ k: 'spr', f: ['fx_bub1', 'fx_bub2', 'fx_bub3', 'fx_bub4', 'fx_bub5', 'fx_bub6'], x: pp.x + rnd(-pp.hl, pp.hl), y: pp.y + rnd(-pp.bw, pp.bw), vx: rnd(-6, 6), vy: -rnd(8, 20), sz: pp.wd * rnd(0.16, 0.26), life: 0, max: rnd(1, 1.7) }); for (let i = 0; i < 14; i++) parts.push({ k: 'bubble', x: pp.x + rnd(-pp.hl, pp.hl), y: pp.y + rnd(-pp.bw, pp.bw), vx: rnd(-8, 8), vy: rnd(-30, -10), r: rnd(2, 5), life: 0, max: rnd(0.8, 1.6) }); }
     } else {
-      parts.push({ k: 'spr', f: ['fx_splash1', 'fx_splash2', 'fx_splash3'], x: p.tx, y: p.ty - 6, sz: pp.wd * 0.24, life: 0, max: 0.6 }); parts.push({ k: 'spr', f: ['fx_ripple'], x: p.tx, y: p.ty + 2, sz: pp.wd * 0.3, life: 0, max: 1.1 });
+      parts.push({ k: 'spr', f: ['fx_spl1', 'fx_spl2', 'fx_spl3', 'fx_spl4', 'fx_spl5', 'fx_spl6'], x: p.tx, y: p.ty - 8, sz: pp.wd * 0.3, life: 0, max: 0.75 }); parts.push({ k: 'spr', f: ['fx_ripple'], x: p.tx, y: p.ty + 2, sz: pp.wd * 0.3, life: 0, max: 1.1 });
       A.audio.splash();
     }
   }
@@ -127,10 +127,12 @@
     ui.board.disabled = !!c.over || c.boardCd > 0; ui.flee.disabled = !!c.over || c.fleeCd > 0;
   }
 
+  let bgName = null; const BGS = ['bg_day1', 'bg_day2', 'bg_night1', 'bg_night2', 'bg_storm1', 'bg_storm2'];
+  const bgImg = () => { if (!bgName) { const S0 = R.S(); const st = S0 ? S0.wind.str : 1; const r = Math.random(); const kind = st > 2.2 || r < 0.14 ? 'storm' : r < 0.42 ? 'night' : 'day'; bgName = 'bg_' + kind + (1 + Math.floor(Math.random() * 2)); } const i = (bgCache[bgName] = bgCache[bgName] || Object.assign(new Image(), { src: 'img/' + bgName + '.jpg' })); return i; }; const bgCache = {};
   function draw() {
     ctx.save(); ctx.clearRect(0, 0, w, hh);
     if (shake > 0) ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5);
-    let g = ctx.createLinearGradient(0, 0, w, hh); g.addColorStop(0, '#5f9aa0'); g.addColorStop(0.5, '#4f8a93'); g.addColorStop(1, '#3d737f'); ctx.fillStyle = g; ctx.fillRect(-10, -10, w + 20, hh + 20);
+    { const bi = bgImg(); if (bi.complete && bi.naturalWidth) { const sc = Math.max(w / bi.naturalWidth, hh / bi.naturalHeight), bw2 = bi.naturalWidth * sc, bh2 = bi.naturalHeight * sc; ctx.drawImage(bi, (w - bw2) / 2, (hh - bh2) / 2 + Math.sin(time * 0.6) * 3, bw2, bh2); } else { ctx.fillStyle = '#3d737f'; ctx.fillRect(-10, -10, w + 20, hh + 20); } }
     // swell bands + streaks scrolling downwards (ships sail up)
     const S = R.S(); const ws = S ? S.wind.str : 1; A.windStr = ws;
     ctx.fillStyle = 'rgba(255,255,255,0.05)'; for (let i = 0; i < 6; i++) { const y = ((time * 14 + i * hh / 6) % (hh + 80)) - 40; ctx.beginPath(); for (let x = 0; x <= w; x += 12) { const yy = y + Math.sin(x * 0.03 + i) * 10; x ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy); } for (let x = w; x >= 0; x -= 12) ctx.lineTo(x, y + 28 + Math.sin(x * 0.03 + i + 1) * 10); ctx.closePath(); ctx.fill(); }
@@ -146,7 +148,7 @@
       if (!v.sinking) {
         if (hp < 0.75) { const tw = fx('fx_tear'); if (tw.complete) ctx.drawImage(tw, p.x - p.wd * 0.12, p.y - p.hg * 0.78, p.wd * 0.2, p.wd * 0.2 * tw.naturalHeight / (tw.naturalWidth || 1)); }
         const nf = hp < 0.25 ? 3 : hp < 0.5 ? 2 : hp < 0.75 ? 1 : 0;
-        for (let k = 0; k < nf; k++) { const f = fx('fx_fire' + (1 + (Math.floor(time * 8 + k) % 3))); const sm = fx('fx_smoke' + (1 + (Math.floor(time * 3 + k) % 3))); const fxp = p.x + (k - 1) * p.wd * 0.24, fyp = p.y - p.hg * 0.3; if (f.complete) ctx.drawImage(f, fxp - p.wd * 0.07, fyp - p.wd * 0.14, p.wd * 0.14, p.wd * 0.14 * f.naturalHeight / (f.naturalWidth || 1)); if (sm.complete) { ctx.globalAlpha = 0.6; const o = (time * 18 + k * 20) % 40; ctx.drawImage(sm, fxp - p.wd * 0.06, fyp - p.wd * 0.2 - o, p.wd * 0.12, p.wd * 0.1); ctx.globalAlpha = 1; } }
+        for (let k = 0; k < nf; k++) { const f = fx('fx_fir' + (1 + (Math.floor(time * 8 + k) % 6))); const sm = fx('fx_smk' + (1 + (Math.floor(time * 3 + k) % 6))); const fxp = p.x + (k - 1) * p.wd * 0.24, fyp = p.y - p.hg * 0.3; if (f.complete) ctx.drawImage(f, fxp - p.wd * 0.07, fyp - p.wd * 0.14, p.wd * 0.14, p.wd * 0.14 * f.naturalHeight / (f.naturalWidth || 1)); if (sm.complete) { ctx.globalAlpha = 0.6; const o = (time * 18 + k * 20) % 40; ctx.drawImage(sm, fxp - p.wd * 0.06, fyp - p.wd * 0.2 - o, p.wd * 0.12, p.wd * 0.1); ctx.globalAlpha = 1; } }
         bars(s, p, v);
       }
     });
