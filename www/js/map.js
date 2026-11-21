@@ -180,12 +180,22 @@
     [['sea.med', 17, 34], ['sea.adriatic', 15.8, 43], ['sea.aegean', 25, 38.9], ['sea.tyrrhenian', 12, 39.8], ['sea.black', 34, 43.4], ['sea.atlantic', -7.5, 41], ['sea.red', 38.8, 19.5], ['sea.persian', 52.2, 27], ['sea.caspian', 50.8, 42], ['sea.arabian', 64, 16], ['sea.bengal', 88, 14], ['sea.indian', 80, 0], ['sea.scs', 114, 12], ['sea.andaman', 96.5, 10.5]].forEach((s2) => { const q = proj(s2[1], s2[2]); ctx.fillText(A.t(s2[0]), q[0], q[1]); }); ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
   }
 
+  const PSH = ['ship_felucca_pirate', 'ship_galley_pirate', 'ship_caravel_pirate'];
   function drawDanger() {
     const S = R.S(); if (!S) return;
-    S.skulls.forEach((id) => {
+    S.skulls.forEach((id, zi) => {
       const p = A.port(id); const q = proj(p.lon, p.lat); const r = (260 / 60) * M.k * YS * (1 + Math.sin(time * 1.5) * 0.03);
-      const g = ctx.createRadialGradient(q[0], q[1], r * 0.1, q[0], q[1], r); g.addColorStop(0, 'rgba(140,30,20,0.28)'); g.addColorStop(1, 'rgba(140,30,20,0)');
+      const g = ctx.createRadialGradient(q[0], q[1], r * 0.1, q[0], q[1], r); g.addColorStop(0, 'rgba(150,30,20,0.16)'); g.addColorStop(1, 'rgba(150,30,20,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 6.3); ctx.fill();
+      // a few tiny black-sailed pirate ships drifting slowly around the hot spot
+      const n = 4, sz = Math.max(13, Math.min(24, M.k * 1.1)); ctx.imageSmoothingEnabled = false;
+      for (let i = 0; i < n; i++) {
+        const ph = i * 1.57 + zi * 2.1, sp = 0.05 + 0.012 * i, a = time * sp * (i % 2 ? 1 : -1) + ph, rr = r * (0.25 + 0.17 * i);
+        const x = q[0] + Math.cos(a) * rr, y = q[1] + Math.sin(a) * rr * 0.62; if (x < -30 || x > w + 30 || y < -30 || y > h + 30) continue;
+        const im = A.img(PSH[(i + zi) % PSH.length]); if (!im.complete || !im.naturalWidth) continue;
+        const dx = -Math.sin(a) * (i % 2 ? 1 : -1), bob = Math.sin(time * 2 + ph) * 1; const hh2 = sz * im.naturalHeight / im.naturalWidth;
+        ctx.save(); ctx.translate(x, y + bob); if (dx < 0) ctx.scale(-1, 1); ctx.globalAlpha = 0.95; ctx.drawImage(im, -sz / 2, -hh2 * 0.8, sz, hh2); ctx.restore();
+      }
     });
   }
 
@@ -234,7 +244,6 @@
       ctx.fillStyle = here ? '#8a3b24' : '#f6ecd0'; ctx.strokeStyle = '#2c1d0e'; ctx.lineWidth = 1.6;
       ctx.beginPath(); ctx.arc(q[0], q[1], 5.5, 0, 6.3); ctx.fill(); ctx.stroke();
       if (here) { const fl = A.img('mk_flag'); if (fl.complete && fl.naturalWidth) { ctx.imageSmoothingEnabled = false; const fw = 20, fh = fw * fl.naturalHeight / fl.naturalWidth, rr = 18; for (let r = 0; r < rr; r++) { const dx = Math.sin(time * 5 + r * 0.45) * 1.6 * (r / rr); ctx.drawImage(fl, 0, r * fl.naturalHeight / rr, fl.naturalWidth, fl.naturalHeight / rr + 0.5, q[0] - 3 + dx, q[1] - 6 - fh + r * fh / rr, fw, fh / rr + 0.5); } } }
-      if (S && S.skulls.indexOf(p.id) >= 0) { const sk = A.img('mk_skull'); const ps = Math.max(30, Math.min(44, M.k * 2.4)); const bob = Math.sin(time * 2.5) * 1.5; if (sk.complete && sk.naturalWidth) { ctx.imageSmoothingEnabled = false; const sh = ps * sk.naturalHeight / sk.naturalWidth; ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(q[0], q[1] - 8, ps * 0.4, ps * 0.14, 0, 0, 6.3); ctx.fill(); ctx.drawImage(sk, q[0] - ps / 2, q[1] - 12 - sh + bob, ps, sh); } else { ctx.fillStyle = 'rgba(246,236,208,0.9)'; ctx.beginPath(); ctx.arc(q[0], q[1] - 22 + bob, 13, 0, 6.3); ctx.fill(); icon(A.ICONS.skull, q[0], q[1] - 22 + bob, 0.9, '#8a1f14', 2.2); } }
       if (spot) {
         ctx.font = fs + 'px "Special Elite", Georgia, serif'; ctx.textAlign = 'left'; if (!sel) { ctx.lineJoin = 'round'; ctx.lineWidth = 3.2; ctx.strokeStyle = 'rgba(246,238,214,0.95)'; ctx.strokeText(d.name, spot[0] + 3, spot[1] + fs); } ctx.fillStyle = '#2c1d0e'; ctx.fillText(d.name, spot[0] + (sel ? 5 : 3), spot[1] + fs); if (p.yard) { const ya = A.img('ui_anchor'); if (ya.complete && ya.naturalWidth) { ctx.imageSmoothingEnabled = false; const ah = fs + 1, aw = ah * ya.naturalWidth / ya.naturalHeight; ctx.drawImage(ya, spot[0] + (sel ? 8 : 6) + ctx.measureText(d.name).width, spot[1] + 1, aw, ah); } }
         if (d.showGoods) p.p.forEach((g, i) => { const im = A.goodImg(g); if (im.complete && im.naturalWidth) ctx.drawImage(im, spot[0] + 3 + i * 17, spot[1] + fs + 5, 16, 16); });

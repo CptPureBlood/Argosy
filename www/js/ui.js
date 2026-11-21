@@ -183,7 +183,7 @@
         h('div', { class: 'seg' }, [1, 2, 4].map((m) => h('button', { class: voy.mul === m ? 'on' : '', onClick: () => { voy.mul = m; renderSheet(); } }, '×' + m)), h('button', { class: voy.paused ? 'on' : '', onClick: () => { voy.paused = !voy.paused; if (!voy.paused) voyTick(); renderSheet(); } }, voy.paused ? t('sea.resume') : t('sea.pause')))));
       return;
     }
-    if (!U.sel || U.sel === s.port) { sh.replaceChildren(h('div', { class: 'sbody hint' }, U.sel ? h('button', { class: 'xbtn', onClick: () => { U.sel = null; selectDest(); } }, '✕') : null, t(U.sel ? 'sheet.here' : 'sheet.hint'), h('div', { class: 'legend' }, h('span', {}, A.icon('anchor', 14)), h('span', {}, A.icon('skull', 14))))); return; }
+    if (!U.sel || U.sel === s.port) { sh.replaceChildren(h('div', { class: 'sbody hint' }, U.sel ? h('button', { class: 'xbtn', onClick: () => { U.sel = null; selectDest(); } }, '✕') : null, t(U.sel ? 'sheet.here' : 'sheet.hint'), h('div', { class: 'legend' }, h('span', {}, A.icon('anchor', 14))))); return; }
     const d = A.port(U.sel), est = R.estimate(U.sel);
     const baseDays = est.nm / ((R.fleetSpeed() || 5) * C.NM_PER_KNOT_DAY); const wr = baseDays / est.days;
     const windTxt = wr > 1.06 ? t('sheet.tail') : wr < 0.94 ? t('sheet.head') : t('sheet.crosswind');
