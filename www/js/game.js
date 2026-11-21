@@ -514,7 +514,7 @@
       const near = A.PORTS.filter((x) => x.id !== portId && A.nm(p.lon, p.lat, x.lon, x.lat) < 1800); const dest = pick(near.length ? near : A.PORTS.filter((x) => x.id !== portId));
       const g = pick(p.p); const base = A.GOOD_BY_ID[g].base; const qty = Math.max(1, Math.min(ri(6, 18), Math.floor(1000 / base)));
       const nm = A.world.route(portId, dest.id).total;
-      S.offers[portId].push({ id: S.nextId++, good: g, qty, from: portId, to: dest.id, deadline: S.day + Math.ceil(nm / 110) + ri(7, 11), reward: Math.round(qty * base + (R.stars(dest.id) >= 3 ? ri(300, 500) : 200)), rep: ri(3, 6) });
+      S.offers[portId].push({ id: S.nextId++, good: g, qty, from: portId, to: dest.id, deadline: S.day + Math.ceil(nm / 110) + ri(7, 11), reward: Math.round(qty * base + (R.stars(dest.id) >= 5 ? ri(600, 1000) : R.stars(dest.id) >= 3 ? ri(300, 500) : 200)), rep: ri(3, 6) });
     }
   }
   R.offers = () => (S.port ? S.offers[S.port] || [] : []);
